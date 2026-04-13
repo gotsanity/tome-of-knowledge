@@ -77,6 +77,27 @@ describe("NodeHeader", () => {
     expect(screen.getByText(/preserve the old oaths/i)).toBeInTheDocument();
   });
 
+  it("humanizes a kebab-case name for display", () => {
+    render(
+      <NodeHeader
+        node={makeNode({
+          type: "npc",
+          name: "fort-commander",
+        })}
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: /Fort Commander/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves an already-humanized name alone", () => {
+    render(<NodeHeader node={makeNode({ type: "npc", name: "Fort Commander" })} />);
+    expect(
+      screen.getByRole("heading", { name: /Fort Commander/i }),
+    ).toBeInTheDocument();
+  });
+
   it("does not crash when type-specific fields are missing", () => {
     render(<NodeHeader node={makeNode({ type: "lore", name: "The Compact" })} />);
     expect(

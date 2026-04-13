@@ -4,6 +4,18 @@ type Props = {
   node: LoadedNode;
 };
 
+function displayName(node: LoadedNode): string {
+  // CWS convention: `name:` frontmatter is the canonical slug form.
+  // Only humanize when it looks like a slug (lowercase + hyphens + no spaces).
+  const raw = node.name;
+  if (/\s/.test(raw) || /[A-Z]/.test(raw)) return raw;
+  return raw
+    .split("-")
+    .filter((s) => s.length > 0)
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(" ");
+}
+
 const TYPE_LABEL: Record<LoadedNode["type"], string> = {
   npc: "Figure",
   location: "Place",
@@ -89,7 +101,7 @@ export function NodeHeader({ node }: Props) {
         {typeLabel}
       </span>
       <h1 className="text-5xl lg:text-6xl font-black text-on-surface tracking-tighter leading-tight mb-6">
-        {node.name}
+        {displayName(node)}
       </h1>
       {facets.length > 0 && (
         <div className="flex flex-wrap gap-8 border-b border-outline-variant/40 pb-6 mb-2">
