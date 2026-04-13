@@ -1,10 +1,15 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import {
+  remarkWikilinks,
+  type WikilinksOptions,
+} from "@/lib/vault/remark-wikilinks";
 import type { LoadedSection } from "@/lib/vault/loaders";
 
 type Props = {
   sections: LoadedSection[];
   bodyMd: string;
+  wikilinks: WikilinksOptions;
 };
 
 /**
@@ -12,11 +17,13 @@ type Props = {
  * lexicon tooltips land in later steps via custom remark plugins on the same
  * pipeline.
  */
-export function NodeBody({ sections, bodyMd }: Props) {
+export function NodeBody({ sections, bodyMd, wikilinks }: Props) {
+  const plugins = [remarkGfm, [remarkWikilinks, wikilinks]] as const;
+
   if (sections.length === 0) {
     return (
       <article className="prose-manuscript">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{bodyMd}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={plugins as never}>{bodyMd}</ReactMarkdown>
       </article>
     );
   }
@@ -30,7 +37,7 @@ export function NodeBody({ sections, bodyMd }: Props) {
               {section.heading}
             </h2>
           )}
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          <ReactMarkdown remarkPlugins={plugins as never}>
             {section.bodyMd}
           </ReactMarkdown>
         </section>

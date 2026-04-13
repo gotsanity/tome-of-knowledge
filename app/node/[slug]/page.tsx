@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AppShell } from "@/app/components";
 import { NodeHeader } from "@/app/components/NodeHeader";
 import { NodeBody } from "@/app/components/NodeBody";
-import { db } from "@/lib/db";
+import { db, schema } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-helpers";
 import { getNode, getRelated } from "@/lib/vault/loaders";
 import type { Viewer } from "@/lib/vault/can-see";
@@ -24,13 +24,26 @@ export default async function NodePage({
 
   const related = await getRelated(db, slug, viewer);
 
+  const [allNodes, allLexicon] = await Promise.all([
+    db.select({ slug: schema.nodes.slug }).from(schema.nodes),
+    db.select({ slug: schema.lexiconTerms.slug }).from(schema.lexiconTerms),
+  ]);
+  const wikilinks = {
+    nodeSlugs: new Set(allNodes.map((r) => r.slug)),
+    lexiconSlugs: new Set(allLexicon.map((r) => r.slug)),
+  };
+
   return (
     <AppShell active="library">
       <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-12 parchment-texture">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8">
             <NodeHeader node={node} />
-            <NodeBody sections={node.sections} bodyMd={node.bodyMd} />
+            <NodeBody
+              sections={node.sections}
+              bodyMd={node.bodyMd}
+              wikilinks={wikilinks}
+            />
           </div>
           <aside className="lg:col-span-4">
             {related.length > 0 && (
