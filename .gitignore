@@ -35,6 +35,15 @@ Thumbs.db
 # Claude Code local settings
 .claude/
 
+# Agent scratchpads, handoff notes, local plans
+.agent/
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+.playwright/

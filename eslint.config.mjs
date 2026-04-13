@@ -19,7 +19,7 @@ const config = [
   ...nextCoreWebVitals,
   ...nextTypescript,
   {
-    files: ["tests/**/*.{ts,tsx}"],
+    files: ["tests/unit/**/*.{ts,tsx}", "tests/integration/**/*.{ts,tsx}", "tests/component/**/*.{ts,tsx}"],
     plugins: { vitest },
     rules: {
       ...vitest.configs.recommended.rules,
