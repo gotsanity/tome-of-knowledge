@@ -8,7 +8,7 @@ visibility: published
 themes: [bargained-survival]
 related:
   - ref: "[[fort-commander]]"
-    rel: PATRON_OF
+    rel: HAS_MEMBER
 goal: preserve the old oaths
 influence: continental
 ---

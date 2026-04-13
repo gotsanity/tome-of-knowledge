@@ -8,7 +8,7 @@ visibility: published
 themes: [bargained-survival]
 related:
   - ref: "[[fort-commander]]"
-    rel: HOME_OF
+    rel: HOUSES
   - ref: "[[red-valley]]"
     rel: LOCATED_IN
 function: garrison

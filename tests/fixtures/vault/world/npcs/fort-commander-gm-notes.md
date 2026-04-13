@@ -6,9 +6,7 @@ depth_tier: detail
 status: active
 visibility: gm-only
 themes: [bargained-survival]
-related:
-  - ref: "[[fort-commander]]"
-    rel: COMPANION_OF
+related: []
 ---
 
 ## Secrets

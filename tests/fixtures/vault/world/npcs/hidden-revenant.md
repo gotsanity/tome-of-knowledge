@@ -8,7 +8,7 @@ visibility: draft
 themes: [bargained-survival]
 related:
   - ref: "[[order-of-mending]]"
-    rel: ASSOCIATED_WITH
+    rel: MEMBER_OF
 species: revenant
 ---
 

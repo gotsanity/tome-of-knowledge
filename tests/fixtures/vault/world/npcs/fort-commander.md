@@ -9,9 +9,9 @@ gm_companion: npcs/fort-commander-gm-notes.md
 themes: [bargained-survival]
 related:
   - ref: "[[fort-ashby]]"
-    rel: LOCATED_AT
+    rel: BASED_IN
   - ref: "[[order-of-mending]]"
-    rel: ASSOCIATED_WITH
+    rel: MEMBER_OF
 species: human
 faction_affiliation: order-of-mending
 public_role: garrison commander
