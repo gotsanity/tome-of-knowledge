@@ -2,6 +2,20 @@
 
 Next.js app running in Docker Compose. A diegetic "Scholar's Archive" reading experience.
 
+## Workflow
+
+- **Test-driven development** — all work planning must follow TDD. Every phase plan includes a test strategy (frameworks, unit/integration/E2E scope, what to cover). Write failing tests before implementation, then make them pass. No phase ships without tests for its core logic.
+- **Regression safety** — new tests get added to the suite permanently; never delete a passing test to make a change easier. If behavior legitimately changes, update the test in the same commit as the code.
+- **Linting** — ESLint (`next lint` via `eslint-config-next`) + TypeScript strict checks must pass before any commit. The `lint` npm script is authoritative; if it fails, the work isn't done. Rules are not disabled ad-hoc — if a rule is wrong for this codebase, disable it in config with a comment explaining why. Every phase plan treats lint + typecheck as part of the "done" definition alongside tests.
+- **Test execution env** — tests run on the **host**, not inside the Docker container (vitest is fast, Docker adds latency). Fixture paths must be portable; never hardcode container paths. Playwright E2E runs against `docker compose up` locally and against a spun-up container in CI.
+- **UI design review gate** — any phase that adds or changes UI surface must invoke the `ui-design-system-guardian` agent in **review mode** before the phase is marked done. The agent checks component output against [`references/design-system/`](references/design-system/). Findings block merge until resolved (either by fixing the code or — rarely, with explicit user decision — updating the design system files first per the protocol in the UI Design System section below). This is a process rule enforced by the assistant, not an npm script.
+
+## Agent workspace
+
+- **`.agent/`** (gitignored) — Claude's local scratchpad. Check here first on new sessions for handoff notes. See [`.agent/README.md`](.agent/README.md) for conventions. Subfolders: `handoff/`, `scratch/`, `plans/`, `decisions/`.
+- **Persistent cross-session memory** lives at `C:\Users\gotsa\.claude\projects\C--Users-gotsa-source-repos-tome-of-knowledge\memory\` — indexed by `MEMORY.md`. Long-lived facts about the user/project go there; in-flight work-state goes in `.agent/`.
+- **Committed plans** live in [`docs/plans/`](docs/plans/). Drafts-in-progress live in `.agent/plans/` until they're ready to promote.
+
 ## Stack
 
 - **Next.js** 15.5.15 (App Router, RSC)
@@ -41,7 +55,7 @@ All pages consume the same app shell so chrome, brand, colors, and typography st
 
 - **Source of truth** — [`references/design-system/design-system.md`](references/design-system/design-system.md) and [`references/design-system/tokens.json`](references/design-system/tokens.json) are **canonical** and governed. Never modify them without an explicit user decision. The runtime (Tailwind config, globals, components) must conform to these files, not the other way around. If the runtime disagrees with the docs, the runtime is wrong.
 - **Change protocol** — when a design change is needed: (1) discuss and decide with the user, (2) update `design-system.md` + `tokens.json` first, (3) propagate to [`tailwind.config.ts`](tailwind.config.ts), [`app/globals.css`](app/globals.css), and shared components, (4) verify the pages visually.
-- **Stitch is ideation only** — Stitch is used as a wireframing / ideation tool for initial iterations. Its output is not canonical. Generated HTML snapshots live in [`references/stitch-html/`](references/stitch-html/) for reference but do not override the design system.
+- **Stitch is ideation only** — Stitch is used as a wireframing / ideation tool for initial iterations. Its output is not canonical and does not override the design system.
 - **Pages must use `AppShell` and shared components** — do not reintroduce bespoke sidebars, brand wordmarks, or hardcoded `amber-*` / `stone-*` / hex colors in page code. Always use the semantic tokens (`bg-surface`, `text-primary`, `border-outline-variant`, etc.) so the theme stays swappable.
 
 ## Auth
