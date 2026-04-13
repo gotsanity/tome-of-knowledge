@@ -5,7 +5,7 @@ import { NodeHeader } from "@/app/components/NodeHeader";
 import { NodeBody } from "@/app/components/NodeBody";
 import { db, schema } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-helpers";
-import { getNode, getRelated } from "@/lib/vault/loaders";
+import { getNode, getRelated, listLexiconTerms } from "@/lib/vault/loaders";
 import type { Viewer } from "@/lib/vault/can-see";
 
 export default async function NodePage({
@@ -24,13 +24,21 @@ export default async function NodePage({
 
   const related = await getRelated(db, slug, viewer);
 
-  const [allNodes, allLexicon] = await Promise.all([
+  const [allNodes, allLexiconTerms] = await Promise.all([
     db.select({ slug: schema.nodes.slug }).from(schema.nodes),
-    db.select({ slug: schema.lexiconTerms.slug }).from(schema.lexiconTerms),
+    listLexiconTerms(db),
   ]);
   const wikilinks = {
     nodeSlugs: new Set(allNodes.map((r) => r.slug)),
-    lexiconSlugs: new Set(allLexicon.map((r) => r.slug)),
+    lexiconSlugs: new Set(allLexiconTerms.map((t) => t.slug)),
+  };
+  const lexiconTooltips = {
+    terms: allLexiconTerms.map((t) => ({
+      slug: t.slug,
+      term: t.term,
+      aliases: t.aliases,
+      tooltipEnabled: t.tooltipEnabled,
+    })),
   };
 
   return (
@@ -43,6 +51,7 @@ export default async function NodePage({
               sections={node.sections}
               bodyMd={node.bodyMd}
               wikilinks={wikilinks}
+              lexiconTooltips={lexiconTooltips}
             />
           </div>
           <aside className="lg:col-span-4">

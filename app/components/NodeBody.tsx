@@ -1,15 +1,39 @@
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import Link from "next/link";
 import {
   remarkWikilinks,
   type WikilinksOptions,
 } from "@/lib/vault/remark-wikilinks";
+import {
+  remarkLexiconTooltips,
+  type LexiconTooltipsOptions,
+} from "@/lib/vault/remark-lexicon-tooltips";
+import { LexiconTooltip } from "./LexiconTooltip";
 import type { LoadedSection } from "@/lib/vault/loaders";
 
 type Props = {
   sections: LoadedSection[];
   bodyMd: string;
   wikilinks: WikilinksOptions;
+  lexiconTooltips: LexiconTooltipsOptions;
+};
+
+const components: Components = {
+  a({ href, children, ...rest }) {
+    if (typeof href === "string" && href.startsWith("/lexicon/")) {
+      const slug = href.replace("/lexicon/", "");
+      return <LexiconTooltip slug={slug}>{children}</LexiconTooltip>;
+    }
+    if (typeof href === "string" && href.startsWith("/")) {
+      return <Link href={href}>{children}</Link>;
+    }
+    return (
+      <a href={href} {...rest}>
+        {children}
+      </a>
+    );
+  },
 };
 
 /**
@@ -17,13 +41,24 @@ type Props = {
  * lexicon tooltips land in later steps via custom remark plugins on the same
  * pipeline.
  */
-export function NodeBody({ sections, bodyMd, wikilinks }: Props) {
-  const plugins = [remarkGfm, [remarkWikilinks, wikilinks]] as const;
+export function NodeBody({
+  sections,
+  bodyMd,
+  wikilinks,
+  lexiconTooltips,
+}: Props) {
+  const plugins = [
+    remarkGfm,
+    [remarkWikilinks, wikilinks],
+    [remarkLexiconTooltips, lexiconTooltips],
+  ];
 
   if (sections.length === 0) {
     return (
       <article className="prose-manuscript">
-        <ReactMarkdown remarkPlugins={plugins as never}>{bodyMd}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={plugins as never} components={components}>
+          {bodyMd}
+        </ReactMarkdown>
       </article>
     );
   }
@@ -37,7 +72,10 @@ export function NodeBody({ sections, bodyMd, wikilinks }: Props) {
               {section.heading}
             </h2>
           )}
-          <ReactMarkdown remarkPlugins={plugins as never}>
+          <ReactMarkdown
+            remarkPlugins={plugins as never}
+            components={components}
+          >
             {section.bodyMd}
           </ReactMarkdown>
         </section>
