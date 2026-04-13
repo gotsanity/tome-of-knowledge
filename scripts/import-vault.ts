@@ -12,14 +12,37 @@ function parseArgs(argv: string[]): {
 } {
   let vaultPath: string | null = null;
   let warningBudget: number | null = null;
+
+  function take(i: number, arg: string, name: string): [string | null, number] {
+    if (arg === name || arg === name.replace("--", "-").slice(0, 2)) {
+      return [argv[i + 1] ?? null, i + 1];
+    }
+    if (arg.startsWith(`${name}=`)) {
+      return [arg.slice(name.length + 1), i];
+    }
+    return [null, i];
+  }
+
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === "--path" || arg === "-p") {
-      vaultPath = argv[++i] ?? null;
-    } else if (arg === "--warning-budget" || arg === "-w") {
-      const raw = argv[++i];
-      const parsed = raw ? Number.parseInt(raw, 10) : NaN;
+
+    if (arg === "--path" || arg === "-p" || arg.startsWith("--path=")) {
+      const [value, next] = take(i, arg, "--path");
+      vaultPath = value;
+      i = next;
+      continue;
+    }
+
+    if (
+      arg === "--warning-budget" ||
+      arg === "-w" ||
+      arg.startsWith("--warning-budget=")
+    ) {
+      const [value, next] = take(i, arg, "--warning-budget");
+      const parsed = value ? Number.parseInt(value, 10) : NaN;
       warningBudget = Number.isFinite(parsed) ? parsed : null;
+      i = next;
+      continue;
     }
   }
   return { vaultPath, warningBudget };

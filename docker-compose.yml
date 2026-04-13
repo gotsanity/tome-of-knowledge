@@ -10,10 +10,15 @@ services:
       - /app/node_modules
       - /app/.next
       - tome-data:/app/data
+      # Read-only bind mount of the CWS vault sibling repo. The container
+      # cannot modify the vault. Override VAULT_HOST_PATH in .env for a
+      # different host path.
+      - ${VAULT_HOST_PATH:-../skill-dev/world}:/vault:ro
     environment:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
       - DATABASE_URL=file:/app/data/tome.db
+      - VAULT_PATH=/vault
 
 volumes:
   tome-data:
