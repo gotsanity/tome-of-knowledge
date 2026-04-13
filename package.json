@@ -16,13 +16,15 @@
     "test:coverage": "vitest run --coverage",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "vault:import": "tsx scripts/import-vault.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.4",
     "@libsql/client": "^0.14.0",
     "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.36.4",
+    "gray-matter": "^4.0.3",
     "next": "15.5.15",
     "next-auth": "5.0.0-beta.25",
     "react": "^19.0.0",
@@ -50,6 +52,7 @@
     "happy-dom": "^20.8.9",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "typescript-eslint": "^8.58.1",
     "vitest": "^4.1.4",
