@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Great Library Index | Ochre &amp; Ink</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "secondary-container": "#fadfae",
+                "on-primary": "#ffffff",
+                "surface-container-high": "#f0e7db",
+                "on-secondary-container": "#75623a",
+                "on-primary-fixed-variant": "#5c4300",
+                "on-tertiary-container": "#fefcff",
+                "on-tertiary": "#ffffff",
+                "primary-fixed-dim": "#eec05c",
+                "inverse-on-surface": "#f9efe4",
+                "surface-dim": "#e2d9cd",
+                "error-container": "#ffdad6",
+                "on-tertiary-fixed-variant": "#194780",
+                "on-background": "#211c11",
+                "surface-container-low": "#fcf2e6",
+                "on-tertiary-fixed": "#001b3c",
+                "tertiary-fixed": "#d6e3ff",
+                "on-surface-variant": "#4e4637",
+                "on-secondary-fixed-variant": "#554420",
+                "surface-container": "#f6ede1",
+                "surface": "#f8f7f6",
+                "outline": "#807665",
+                "error": "#ba1a1a",
+                "inverse-surface": "#343028",
+                "tertiary-fixed-dim": "#a8c8ff",
+                "outline-variant": "#d2c5b1",
+                "primary-container": "#946f0c",
+                "secondary-fixed": "#fadfae",
+                "on-error-container": "#93000a",
+                "on-error": "#ffffff",
+                "surface-tint": "#9c7616",
+                "tertiary": "#335c97",
+                "surface-variant": "#eae1d6",
+                "surface-bright": "#fff8f2",
+                "secondary-fixed-dim": "#dcc394",
+                "inverse-primary": "#eec05c",
+                "primary-fixed": "#ffdfa0",
+                "on-secondary-fixed": "#261a00",
+                "tertiary-container": "#4e75b2",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-highest": "#eae1d6",
+                "on-surface": "#211c11",
+                "on-secondary": "#ffffff",
+                "background": "#f8f7f6",
+                "on-primary-fixed": "#261a00",
+                "on-primary-container": "#fffbff",
+                "secondary": "#6f5c35",
+                "primary": "#9c7616"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "fontFamily": {
+                "headline": ["Newsreader"],
+                "body": ["Newsreader"],
+                "label": ["Newsreader"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-image: radial-gradient(#1c1917 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            background-color: #0c0a09;
+        }
+        .leader-dots::before {
+            content: "";
+            flex-grow: 1;
+            border-bottom: 1px dotted #78350f;
+            margin: 0 12px;
+            margin-bottom: 5px;
+            opacity: 0.4;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-body text-stone-300 selection:bg-amber-900/30 selection:text-amber-500">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-stone-950 dark:bg-black bg-stone-900/50 backdrop-blur-md shadow-sm shadow-stone-900/40 flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-amber-700 dark:text-amber-600 tracking-tighter">Ochre &amp; Ink</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="font-serif font-light text-stone-200 hover:text-amber-500 transition-colors duration-300" href="#">Characters</a>
+<a class="font-serif font-light text-stone-200 hover:text-amber-500 transition-colors duration-300" href="#">Homebrew</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm">search</span>
+<input class="bg-stone-900 border-none rounded-sm py-1.5 pl-10 pr-4 text-sm font-serif focus:ring-1 focus:ring-amber-700/50 text-stone-300 w-64" placeholder="Search the archives..." type="text"/>
+</div>
+<button class="text-stone-400 hover:text-amber-500 transition-colors duration-300 scale-95 transition-transform">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<img alt="Archivist Profile" class="w-8 h-8 rounded-full border border-amber-900/40 object-cover" data-alt="Close up portrait of an elderly man with wisdom-filled eyes, wearing dark scholarly robes in a library with soft warm candlelight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ87R_4lxZ5xKv5nntOUu9mBoTsl8iYi1io5eePm8-YU2abtqYI_QCgjAF3Z-CO0l3B8Dc-NdQOVQFvxLo-vrRg3mUKER83FSWgufWmymBpuCw6iv-7YCj9koJd5VjVUOgmZ1r7V6W6BPhKB8ElwLvE1TVaUfGFmpDg3bVwJ5Z7o6YpbTcCTVpVlqLeQo4nxlbCN6_OTJFKyaAHnYGQrlaHRemtgm4-plcCwaMLPWgIWwyxiZIdfqTgW-FUugWa2mO6mr6L0wGnh5b"/>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="h-full w-64 fixed left-0 top-0 pt-20 bg-stone-900/40 dark:bg-stone-950/60 backdrop-blur-xl border-r border-amber-900/20 flex flex-col h-full space-y-4 px-4 hidden lg:flex">
+<div class="flex items-center gap-3 px-2 py-4 mb-4">
+<div class="w-10 h-10 flex items-center justify-center bg-amber-950/30 border border-amber-600/30 rounded-sm">
+<span class="material-symbols-outlined text-amber-600" data-icon="book_2">book_2</span>
+</div>
+<div>
+<p class="font-bold text-amber-600 font-serif text-sm tracking-wide">The Archivist</p>
+<p class="text-[10px] text-stone-500 uppercase tracking-[0.2em]">Grand Chronicle</p>
+</div>
+</div>
+<button class="w-full py-2 bg-amber-700/10 border border-amber-700/30 text-amber-600 font-serif text-sm tracking-widest uppercase hover:bg-amber-700/20 transition-all mb-6 rounded-sm">
+            New Entry
+        </button>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-stone-500 font-serif text-sm tracking-wide hover:bg-amber-900/10 hover:text-amber-400 transition-all opacity-80 hover:opacity-100" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="book_2">book_2</span>
+                Library
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-amber-500 font-bold bg-amber-950/20 border-r-2 border-amber-600 font-serif text-sm tracking-wide transition-all" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="format_list_bulleted">format_list_bulleted</span>
+                TOC
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-stone-500 font-serif text-sm tracking-wide hover:bg-amber-900/10 hover:text-amber-400 transition-all opacity-80 hover:opacity-100" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="edit_note">edit_note</span>
+                Scribe Desk
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-stone-500 font-serif text-sm tracking-wide hover:bg-amber-900/10 hover:text-amber-400 transition-all opacity-80 hover:opacity-100" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="inventory_2">inventory_2</span>
+                Archived
+            </a>
+</nav>
+<div class="mt-auto pb-10 px-2">
+<div class="p-4 bg-stone-900/60 border border-stone-800 rounded-sm">
+<p class="text-[10px] text-stone-500 uppercase tracking-widest mb-2">Ink Supply</p>
+<div class="h-1 bg-stone-800 w-full overflow-hidden">
+<div class="h-full bg-amber-700 w-3/4"></div>
+</div>
+<p class="text-[9px] text-stone-600 mt-1 italic text-right">74% Remaining</p>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="lg:ml-64 pt-24 pb-12 px-6 md:px-12 lg:px-24">
+<div class="max-w-4xl mx-auto">
+<!-- Header Section -->
+<header class="text-center mb-16 relative">
+<div class="inline-block mb-4">
+<svg fill="none" height="20" viewbox="0 0 40 20" width="40" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 10C10 10 15 0 20 0C25 0 30 10 40 10C30 10 25 20 20 20C15 20 10 10 0 10Z" fill="#9c7616" fill-opacity="0.3"></path>
+</svg>
+</div>
+<h1 class="text-5xl md:text-6xl font-black text-stone-100 tracking-tighter mb-4">The Universal Index</h1>
+<p class="font-serif italic text-amber-700/80 text-xl">Chronicles of the Known and Forbidden</p>
+<div class="mt-8 flex justify-center items-center gap-4">
+<span class="h-px w-16 bg-gradient-to-r from-transparent to-amber-900/40"></span>
+<span class="text-[10px] uppercase tracking-[0.4em] text-stone-500">Volume XIV • Second Era</span>
+<span class="h-px w-16 bg-gradient-to-l from-transparent to-amber-900/40"></span>
+</div>
+</header>
+<!-- Index Ledger -->
+<div class="space-y-12">
+<!-- Section: The Beginning -->
+<section>
+<div class="flex items-center gap-4 mb-6">
+<span class="text-primary text-4xl font-bold leading-none">I.</span>
+<h2 class="text-sm font-bold uppercase tracking-[0.2em] text-amber-600">Origins and Foundations</h2>
+<div class="flex-grow h-px bg-amber-900/20"></div>
+</div>
+<ul class="space-y-4">
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">The Scribe's First Invocation</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">004</span>
+</li>
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">Mapping the Ether-Void</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">012</span>
+</li>
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">The Covenant of Seven Seals</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">029</span>
+</li>
+</ul>
+</section>
+<!-- Section: Bestiary -->
+<section>
+<div class="flex items-center gap-4 mb-6">
+<span class="text-primary text-4xl font-bold leading-none">II.</span>
+<h2 class="text-sm font-bold uppercase tracking-[0.2em] text-amber-600">Creatures of the Gloom</h2>
+<div class="flex-grow h-px bg-amber-900/20"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+<ul class="space-y-4">
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">Whispering Stags</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">045</span>
+</li>
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">Obsidian Drakes</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">058</span>
+</li>
+</ul>
+<ul class="space-y-4">
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">Marrow-Wights</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">072</span>
+</li>
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">The Unseen Hive</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">089</span>
+</li>
+</ul>
+</div>
+</section>
+<!-- Featured Plate Asymmetric Element -->
+<div class="py-12 flex flex-col md:flex-row gap-10 items-center">
+<div class="w-full md:w-1/2 p-1 border border-amber-900/20 bg-stone-900 shadow-xl">
+<div class="border border-amber-900/10 p-2">
+<img alt="Ancient Grimoire" class="w-full h-64 object-cover grayscale brightness-75 hover:grayscale-0 transition-all duration-700" data-alt="Close up of a dusty ancient leather-bound book with intricate gold embossing and heavy iron clasps resting on a stone pedestal" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHi92w4uWNKI55DZzFsShcVx1IzOfcqzLhUdjJhAbaCD9eQT1D4tHKUUTwwfHGD3enZnLZ3-NXzbSdaQQjZnSMlXFOm4mRkbYUJ6KqNAOFjiKRQlehZanc64tY-_ZT70fSnjclnXnrF5YWtz1RXyMMtIFzybJ85ya-_aCstUTF2I9L_ipZJ6JOeXQWIaWC2vrlbgjpozrGzQ2oiNaB8l0J-f_npg6Id45TIgtMAg5aPvSC9fNASZuN4AbKelRiKDeTnj62K357IfKt"/>
+</div>
+</div>
+<div class="w-full md:w-1/2 space-y-4">
+<span class="text-amber-600 font-bold text-[10px] tracking-[0.3em] uppercase">Marginalia Note</span>
+<p class="font-serif italic text-stone-400 text-lg leading-relaxed">
+                            "The ink used for this volume was distilled from the midnight petals of the Gloom-Rose, ensuring the words never fade, even when the stars eventually do."
+                        </p>
+<p class="text-stone-500 text-xs font-serif">— Archivist Kaelen, 432 AC</p>
+</div>
+</div>
+<!-- Section: Arcana -->
+<section>
+<div class="flex items-center gap-4 mb-6">
+<span class="text-primary text-4xl font-bold leading-none">III.</span>
+<h2 class="text-sm font-bold uppercase tracking-[0.2em] text-amber-600">Forbidden Arts &amp; Alchemy</h2>
+<div class="flex-grow h-px bg-amber-900/20"></div>
+</div>
+<ul class="space-y-4">
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">Silver-Tongued Toxins</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">112</span>
+</li>
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">Rites of the Solar Eclipse</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">125</span>
+</li>
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">The Transmutation of Sorrow</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">148</span>
+</li>
+<li class="group flex items-end">
+<a class="text-lg font-serif text-stone-300 group-hover:text-amber-500 transition-colors duration-300" href="#">Vesper’s Guide to Star-Falling</a>
+<span class="leader-dots"></span>
+<span class="font-serif italic text-amber-700/60">161</span>
+</li>
+</ul>
+</section>
+</div>
+<!-- Footer Ornament -->
+<footer class="mt-24 border-t border-amber-900/20 pt-12 flex flex-col items-center">
+<div class="mb-6 flex gap-4 text-stone-600">
+<span class="material-symbols-outlined text-sm">history_edu</span>
+<span class="material-symbols-outlined text-sm">auto_stories</span>
+<span class="material-symbols-outlined text-sm">menu_book</span>
+</div>
+<p class="text-[10px] uppercase tracking-[0.5em] text-stone-600 mb-2">END OF INDEX</p>
+<div class="w-1 h-1 bg-amber-900/40 rounded-full"></div>
+</footer>
+</div>
+</main>
+<!-- Mobile Nav Bar (Bottom) -->
+<div class="md:hidden fixed bottom-0 left-0 w-full bg-stone-950/90 backdrop-blur-md border-t border-amber-900/20 px-4 py-3 flex justify-around items-center z-50">
+<a class="flex flex-col items-center text-stone-500" href="#">
+<span class="material-symbols-outlined">book_2</span>
+<span class="text-[10px] font-serif mt-1">Library</span>
+</a>
+<a class="flex flex-col items-center text-amber-600" href="#">
+<span class="material-symbols-outlined">format_list_bulleted</span>
+<span class="text-[10px] font-serif mt-1">TOC</span>
+</a>
+<a class="flex flex-col items-center text-stone-500" href="#">
+<span class="material-symbols-outlined">edit_note</span>
+<span class="text-[10px] font-serif mt-1">Scribe</span>
+</a>
+<a class="flex flex-col items-center text-stone-500" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-serif mt-1">Archive</span>
+</a>
+</div>
+</body></html>

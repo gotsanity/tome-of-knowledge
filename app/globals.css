@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    font-family: var(--font-newsreader), Newsreader, Georgia, serif;
+    color: #d6d3d1; /* stone-300 */
+    background-color: #0a0906;
+    background-image: radial-gradient(#d4af3710 0.5px, transparent 0.5px);
+    background-size: 24px 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .material-symbols-outlined {
+    font-family: "Material Symbols Outlined";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+}
+
+@layer components {
+  /* Scrollbar hidden */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Parchment mask for soft bottom fades */
+  .parchment-mask {
+    mask-image: linear-gradient(to bottom, black 80%, transparent);
+  }
+
+  /* Subtle radial wash used on the detail page */
+  .parchment-texture {
+    background-image: radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.01) 0%,
+      transparent 100%
+    );
+  }
+
+  /* Faint warm glow around the scribe desk editor canvas */
+  .parchment-glow {
+    box-shadow: 0 0 40px rgba(156, 118, 22, 0.05);
+  }
+
+  /* Ledger-style dotted leaders for Table of Contents rows */
+  .leader-dots::before {
+    content: "";
+    flex-grow: 1;
+    border-bottom: 1px dotted #78350f;
+    margin: 0 12px 5px 12px;
+    opacity: 0.4;
+  }
+
+  /* Illuminated drop cap used on detail and scribe pages */
+  .drop-cap::first-letter {
+    float: left;
+    font-size: 4.5rem;
+    line-height: 1;
+    font-weight: 800;
+    padding-right: 0.5rem;
+    color: #d97706; /* amber-600 */
+    font-family: var(--font-newsreader), Newsreader, serif;
+  }
+  .drop-cap-sm::first-letter {
+    float: left;
+    font-size: 3.5rem;
+    line-height: 1;
+    font-weight: 700;
+    padding-right: 8px;
+    color: #9c7616;
+    font-family: var(--font-newsreader), Newsreader, serif;
+  }
+}
+
+/* Custom thin scrollbars on detail / scribe pages */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0c0a09;
+}
+::-webkit-scrollbar-thumb {
+  background: #44403c;
+  border-radius: 3px;
+}
