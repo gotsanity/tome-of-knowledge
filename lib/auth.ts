@@ -23,14 +23,12 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    username: string | null;
-    displayName: string | null;
-    role: Role;
-  }
-}
+type AppJWT = {
+  id: string;
+  username: string | null;
+  displayName: string | null;
+  role: Role;
+};
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -84,10 +82,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.username = token.username;
-      session.user.displayName = token.displayName;
-      session.user.role = token.role;
+      const t = token as unknown as AppJWT;
+      session.user.id = t.id;
+      session.user.username = t.username;
+      session.user.displayName = t.displayName;
+      session.user.role = t.role;
       return session;
     },
   },

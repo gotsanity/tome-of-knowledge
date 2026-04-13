@@ -15,7 +15,9 @@ export default async function InvitePage({
     where: eq(schema.invites.token, token),
   });
 
-  if (!invite || invite.usedAt || invite.expiresAt.getTime() < Date.now()) {
+  // eslint-disable-next-line react-hooks/purity -- async server component; Date.now() runs per-request on the server, not during React render
+  const now = Date.now();
+  if (!invite || invite.usedAt || invite.expiresAt.getTime() < now) {
     notFound();
   }
 

@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+function useIsMounted() {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "./Button";
@@ -27,8 +34,7 @@ export function LoginModal({ open, onClose }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useIsMounted();
 
   if (!open || !mounted) return null;
 

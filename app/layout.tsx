@@ -24,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${newsreader.variable}`}>
       <head>
+        {/* eslint-disable-next-line @next/next/no-page-custom-font -- root layout; next/font does not support icon fonts */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
