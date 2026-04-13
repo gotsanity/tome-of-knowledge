@@ -91,6 +91,57 @@
     color: #9c7616;
     font-family: var(--font-newsreader), Newsreader, serif;
   }
+
+  /* Manuscript prose styling for rendered vault-node markdown.
+     Colors reference the Scholar's Archive tokens (references/design-system/tokens.json):
+     on_surface #f9efe4, on_surface_variant #d2c5b1, primary #d4af37, outline_variant #4e4637 */
+  .prose-manuscript {
+    color: #f9efe4;
+    font-size: 1.125rem;
+    line-height: 1.8;
+  }
+  .prose-manuscript p {
+    margin-bottom: 1.25rem;
+  }
+  .prose-manuscript p:last-child {
+    margin-bottom: 0;
+  }
+  .prose-manuscript h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f9efe4;
+    margin: 1.75rem 0 0.75rem;
+  }
+  .prose-manuscript ul,
+  .prose-manuscript ol {
+    margin: 0 0 1.25rem 1.5rem;
+  }
+  .prose-manuscript ul {
+    list-style: disc;
+  }
+  .prose-manuscript ol {
+    list-style: decimal;
+  }
+  .prose-manuscript li {
+    margin-bottom: 0.25rem;
+  }
+  .prose-manuscript blockquote {
+    border-left: 2px solid #4e4637;
+    padding-left: 1rem;
+    font-style: italic;
+    color: #d2c5b1;
+    margin: 1.25rem 0;
+  }
+  .prose-manuscript code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.875em;
+    color: #d4af37;
+  }
+  .prose-manuscript a {
+    color: #d4af37;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 }
 
 /* Custom thin scrollbars on detail / scribe pages */
