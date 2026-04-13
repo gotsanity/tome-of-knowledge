@@ -5,7 +5,12 @@ import { NodeHeader } from "@/app/components/NodeHeader";
 import { NodeBody } from "@/app/components/NodeBody";
 import { db, schema } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-helpers";
-import { getNode, getRelated, listLexiconTerms } from "@/lib/vault/loaders";
+import {
+  getNode,
+  getRelated,
+  listLexiconTerms,
+  getCompanion,
+} from "@/lib/vault/loaders";
 import type { Viewer } from "@/lib/vault/can-see";
 
 export default async function NodePage({
@@ -23,6 +28,7 @@ export default async function NodePage({
   }
 
   const related = await getRelated(db, slug, viewer);
+  const companion = await getCompanion(db, slug, viewer);
 
   const [allNodes, allLexiconTerms] = await Promise.all([
     db.select({ slug: schema.nodes.slug }).from(schema.nodes),
@@ -53,6 +59,39 @@ export default async function NodePage({
               wikilinks={wikilinks}
               lexiconTooltips={lexiconTooltips}
             />
+
+            {companion && (
+              <section
+                aria-labelledby="gm-notes-heading"
+                className="mt-16 border border-outline-variant/30 bg-surface-container-high/40 backdrop-blur-sm p-8 rounded"
+              >
+                <header className="flex items-center gap-3 mb-6 pb-4 border-b border-outline-variant/30">
+                  <span
+                    className="material-symbols-outlined text-primary"
+                    aria-hidden
+                  >
+                    visibility
+                  </span>
+                  <div>
+                    <span className="block text-[10px] uppercase tracking-[0.3em] text-outline">
+                      GM Only
+                    </span>
+                    <h2
+                      id="gm-notes-heading"
+                      className="text-xl font-bold text-primary uppercase tracking-[0.15em]"
+                    >
+                      GM Notes
+                    </h2>
+                  </div>
+                </header>
+                <NodeBody
+                  sections={companion.sections}
+                  bodyMd={companion.bodyMd}
+                  wikilinks={wikilinks}
+                  lexiconTooltips={lexiconTooltips}
+                />
+              </section>
+            )}
           </div>
           <aside className="lg:col-span-4">
             {related.length > 0 && (

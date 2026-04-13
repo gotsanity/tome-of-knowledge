@@ -1,4 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+
+// Load .env so GM_USERNAME / GM_PASSWORD are available in specs that need
+// to authenticate as the GM seed user.
+dotenv.config();
 
 export default defineConfig({
   testDir: "./tests/e2e",
