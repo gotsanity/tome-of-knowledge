@@ -20,6 +20,9 @@ yarn-error.log*
 .env
 .env*.local
 
+# SQLite data volume (local dev fallback outside Docker)
+/data/
+
 # Editor / OS
 .DS_Store
 Thumbs.db

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Newsreader } from "next/font/google";
 import "./globals.css";
+import { SessionProvider } from "./components/SessionProvider";
 
 const newsreader = Newsreader({
   subsets: ["latin"],
@@ -28,7 +29,9 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         />
       </head>
-      <body className="font-body text-on-surface antialiased">{children}</body>
+      <body className="font-body text-on-surface antialiased">
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }

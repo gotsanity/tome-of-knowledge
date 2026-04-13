@@ -1,0 +1,11 @@
+import type { Config } from "drizzle-kit";
+
+export default {
+  schema: "./lib/db/schema.ts",
+  out: "./lib/db/migrations",
+  dialect: "sqlite",
+  driver: "libsql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL ?? "file:./data/tome.db",
+  },
+} satisfies Config;

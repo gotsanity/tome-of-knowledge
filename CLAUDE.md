@@ -44,6 +44,17 @@ All pages consume the same app shell so chrome, brand, colors, and typography st
 - **Stitch is ideation only** — Stitch is used as a wireframing / ideation tool for initial iterations. Its output is not canonical. Generated HTML snapshots live in [`references/stitch-html/`](references/stitch-html/) for reference but do not override the design system.
 - **Pages must use `AppShell` and shared components** — do not reintroduce bespoke sidebars, brand wordmarks, or hardcoded `amber-*` / `stone-*` / hex colors in page code. Always use the semantic tokens (`bg-surface`, `text-primary`, `border-outline-variant`, etc.) so the theme stays swappable.
 
+## Auth
+
+- **Stack** — Auth.js v5 (`next-auth@beta`) with Credentials provider, Drizzle ORM, SQLite via `@libsql/client` (file URL). JWT session strategy with `role` embedded in the token (Credentials provider requires JWT; DB sessions table exists but is reserved for future OAuth providers).
+- **Roles** — `user` and `gm` (game master). GM can mint invite URLs and (later phase) view drafts/gm-only content. Helpers: [`lib/auth-helpers.ts`](lib/auth-helpers.ts) exposes `getSessionUser()` and `requireGm()`.
+- **Bootstrap** — first boot runs [`instrumentation.ts`](instrumentation.ts) → applies migrations in [`lib/db/migrations/`](lib/db/migrations/) → seeds a GM user from `GM_USERNAME` / `GM_EMAIL` / `GM_PASSWORD` / `GM_DISPLAY_NAME` env vars if none exists. Idempotent.
+- **Invite flow** — invite-only signup. GM clicks account glyph → "Create invite" → the browser copies a `/invite/<token>` URL to the clipboard. Recipient visits the URL, fills in username/email/display name/password, account is created with the invite's role, invite is marked used. Tokens are single-use with a 7-day TTL.
+- **Env vars** — see [`.env.example`](.env.example). Required: `AUTH_SECRET` (generate with `openssl rand -base64 32`), `DATABASE_URL` (defaults to `file:/app/data/tome.db` in Docker), `GM_*` seed vars.
+- **Data volume** — SQLite file lives in the `tome-data` named volume mounted at `/app/data`. Survives `docker compose down`, destroyed by `docker compose down -v`.
+- **Drizzle scripts** — `npm run db:generate` (create migration from schema diff), `npm run db:migrate` (apply migrations — normally done by instrumentation), `npm run db:studio` (browse the DB).
+- **No route gating yet** — this phase is plumbing only. All existing routes (`/`, `/contents`, `/entry`, `/scribe`) remain public. Login works end-to-end, but no `middleware.ts` redirects are in place. Content model + gating land in a later phase.
+
 ## Dev workflow
 
 The compose file bind-mounts the project into `/app` with anonymous volumes shielding `node_modules` and `.next`, so host edits hot-reload inside the container (`WATCHPACK_POLLING=true` for Windows file-watch reliability).

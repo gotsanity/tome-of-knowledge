@@ -3,10 +3,17 @@ services:
     build: .
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     volumes:
       - .:/app
       - /app/node_modules
       - /app/.next
+      - tome-data:/app/data
     environment:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
+      - DATABASE_URL=file:/app/data/tome.db
+
+volumes:
+  tome-data:

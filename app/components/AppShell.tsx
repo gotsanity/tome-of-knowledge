@@ -7,7 +7,7 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-export function AppShell({ active, children }: AppShellProps) {
+export async function AppShell({ active, children }: AppShellProps) {
   return (
     <div className="flex min-h-screen no-scrollbar">
       <SideNavBar active={active} />

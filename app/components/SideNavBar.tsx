@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth";
 
 export type NavKey = "library" | "contents" | "scribe" | "archived";
 
@@ -21,7 +22,16 @@ const ITEMS: NavItem[] = [
   { key: "archived", href: "#", icon: "inventory_2", label: "Archived" },
 ];
 
-export function SideNavBar({ active }: { active: NavKey }) {
+export async function SideNavBar({ active }: { active: NavKey }) {
+  const session = await auth();
+  const user = session?.user;
+  const personaName = user?.displayName ?? user?.username ?? "Elder Thorne";
+  const personaRole = user
+    ? user.role === "gm"
+      ? "Game Master"
+      : "Scholar"
+    : "Master of Records";
+
   return (
     <aside className="w-72 flex flex-col border-r border-stone-800 sticky left-0 top-0 bg-stone-900 z-50 h-screen overflow-hidden">
       <div className="p-8 border-b border-stone-800/50">
@@ -71,9 +81,9 @@ export function SideNavBar({ active }: { active: NavKey }) {
             </span>
           </div>
           <div>
-            <p className="text-sm font-bold text-stone-300">Elder Thorne</p>
+            <p className="text-sm font-bold text-stone-300">{personaName}</p>
             <p className="text-[10px] uppercase tracking-tighter text-stone-500">
-              Master of Records
+              {personaRole}
             </p>
           </div>
         </div>

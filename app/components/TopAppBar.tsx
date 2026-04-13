@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccountMenu } from "./AccountMenu";
 
 export function TopAppBar() {
   return (
@@ -37,9 +38,7 @@ export function TopAppBar() {
               search
             </span>
           </div>
-          <span className="material-symbols-outlined text-2xl cursor-pointer hover:text-primary transition-colors">
-            account_circle
-          </span>
+          <AccountMenu />
         </div>
       </div>
     </header>
