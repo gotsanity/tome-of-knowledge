@@ -14,6 +14,7 @@ export type Role = "user" | "gm";
 export const NODE_TYPES = [
   "npc",
   "location",
+  "geography",
   "faction",
   "region",
   "species",

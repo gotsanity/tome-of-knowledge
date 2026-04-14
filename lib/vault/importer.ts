@@ -119,12 +119,17 @@ function companionSlugFromFrontmatter(raw: unknown): string | null {
 function parseNodeFile(
   sourcePath: string,
   fileContent: string,
-): ParsedNodeFile | { error: string } {
+): ParsedNodeFile | { skip: true } | { warning: string } | { error: string } {
   const parsed = matter(fileContent);
   const fm = parsed.data as Record<string, unknown>;
+  if (fm.type === undefined || fm.type === null || fm.type === "") {
+    return { skip: true };
+  }
   const type = coerceType(fm.type);
   if (!type) {
-    return { error: `${sourcePath}: missing or unknown frontmatter 'type'` };
+    return {
+      warning: `${sourcePath}: frontmatter 'type: ${JSON.stringify(fm.type)}' is not a known node type — skipping`,
+    };
   }
   const rawName = typeof fm.name === "string" ? fm.name : null;
   const fallbackName = path.basename(sourcePath).replace(/\.md$/, "");
@@ -194,9 +199,19 @@ export async function importVault(
     }
 
     const parsed = parseNodeFile(file, content);
+    if ("skip" in parsed) {
+      // Non-node markdown files (world-overview, timeline, readmes) have no
+      // `type:` at all — silently ignored.
+      continue;
+    }
+    if ("warning" in parsed) {
+      // `type:` is present but not a recognized NodeType — almost always a
+      // schema drift between the vault and the app enum. Surface it.
+      warnings.push(parsed.warning);
+      continue;
+    }
     if ("error" in parsed) {
-      // Silently skip non-node files (world-overview, timeline, etc.) — they
-      // hit the type check and aren't errors, just not importable as nodes.
+      errors.push(parsed.error);
       continue;
     }
     const visResult = validateNodeVisibility({

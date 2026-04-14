@@ -44,6 +44,7 @@ function displayName(node: LoadedNode): string {
 const TYPE_LABEL: Record<LoadedNode["type"], string> = {
   npc: "Figure",
   location: "Place",
+  geography: "Geographic Feature",
   faction: "Faction",
   region: "Region",
   species: "Species",

@@ -3,7 +3,7 @@ import { createClient, type Client } from "@libsql/client";
 import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import { eq, and } from "drizzle-orm";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync, cpSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { importVault } from "@/lib/vault/importer";
@@ -51,6 +51,7 @@ describe("importVault", () => {
     const rows = await db.select().from(schema.nodes);
     const slugs = rows.map((r) => r.slug).sort();
     expect(slugs).toEqual([
+      "amber-drift-sea",
       "fort-ashby",
       "fort-commander",
       "fort-commander-gm-notes",
@@ -58,7 +59,67 @@ describe("importVault", () => {
       "order-of-mending",
       "red-valley",
     ]);
-    expect(result.stats.nodesImported).toBe(6);
+    expect(result.stats.nodesImported).toBe(7);
+  });
+
+  it("imports geography nodes (type: geography)", async () => {
+    await importVault(db, FIXTURE_VAULT);
+    const geo = await db.query.nodes.findFirst({
+      where: eq(schema.nodes.slug, "amber-drift-sea"),
+    });
+    expect(geo).toBeDefined();
+    expect(geo?.type).toBe("geography");
+  });
+
+  it("warns when a file has frontmatter 'type:' with an unknown value", async () => {
+    // Build a throwaway vault with a single rogue-typed file. Copy the base
+    // fixture so wikilinks still resolve cleanly, then add one broken node.
+    const tmpVault = mkdtempSync(path.join(tmpdir(), "tome-importer-vault-"));
+    cpSync(FIXTURE_VAULT, tmpVault, { recursive: true });
+    const stowaway = path.join(tmpVault, "geography", "unknown-feature.md");
+    mkdirSync(path.dirname(stowaway), { recursive: true });
+    writeFileSync(
+      stowaway,
+      `---\ncws_version: 3.0\ntype: fhtagn\nname: unknown-feature\nvisibility: published\n---\n\n## Overview\n\nSchema drift canary.\n`,
+    );
+
+    try {
+      const result = await importVault(db, tmpVault);
+      const typeWarnings = result.warnings.filter((w) =>
+        w.includes("not a known node type"),
+      );
+      expect(typeWarnings.length).toBe(1);
+      expect(typeWarnings[0]).toContain("unknown-feature.md");
+      expect(typeWarnings[0]).toContain("fhtagn");
+
+      // The rogue file must not produce a node row.
+      const rogue = await db.query.nodes.findFirst({
+        where: eq(schema.nodes.slug, "unknown-feature"),
+      });
+      expect(rogue).toBeUndefined();
+    } finally {
+      rmSync(tmpVault, { recursive: true, force: true });
+    }
+  });
+
+  it("silently skips markdown files with no 'type:' frontmatter", async () => {
+    const tmpVault = mkdtempSync(path.join(tmpdir(), "tome-importer-vault-"));
+    cpSync(FIXTURE_VAULT, tmpVault, { recursive: true });
+    writeFileSync(
+      path.join(tmpVault, "world-overview.md"),
+      `---\ncws_version: 3.0\nname: world-overview\n---\n\n## Pillars\n\nNot a node.\n`,
+    );
+
+    try {
+      const result = await importVault(db, tmpVault);
+      // Must not surface as a type warning — absence of type is benign.
+      const typeWarnings = result.warnings.filter((w) =>
+        w.includes("not a known node type"),
+      );
+      expect(typeWarnings).toEqual([]);
+    } finally {
+      rmSync(tmpVault, { recursive: true, force: true });
+    }
   });
 
   it("splits each node into sections", async () => {

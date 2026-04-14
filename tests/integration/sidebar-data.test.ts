@@ -50,6 +50,7 @@ describe("loadSidebarSections", () => {
     );
     expect(byType).toEqual({
       faction: { label: "Factions", count: 1 },
+      geography: { label: "Geography", count: 1 },
       location: { label: "Places", count: 2 },
       npc: { label: "Figures", count: 1 },
     });
@@ -83,7 +84,7 @@ describe("loadSidebarSections", () => {
   it("orders sections using NODE_TYPES order, matching the contents page", async () => {
     const sections = await loadSidebarSections(db, regularUser);
     const order = sections.map((s) => s.type);
-    expect(order).toEqual(["npc", "location", "faction"]);
+    expect(order).toEqual(["npc", "location", "geography", "faction"]);
   });
 
   it("returns an empty array when the vault has no visible nodes", async () => {

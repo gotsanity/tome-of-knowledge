@@ -20,6 +20,12 @@ export const CATEGORY_META: Record<NodeType, CategoryMeta> = {
     letter: "Pl",
     blurb: "Cities, ruins, and crossroads worth naming.",
   },
+  geography: {
+    type: "geography",
+    label: "Geography",
+    letter: "G",
+    blurb: "Seas, ranges, and the lay of the land itself.",
+  },
   faction: {
     type: "faction",
     label: "Factions",

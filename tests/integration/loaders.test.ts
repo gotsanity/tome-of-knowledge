@@ -117,9 +117,10 @@ describe("vault loaders", () => {
     it("returns only published counts for a regular user", async () => {
       const counts = await listCategoryCounts(db, regularUser);
       const byType = Object.fromEntries(counts.map((c) => [c.type, c.count]));
-      // fixture: 1 published faction, 2 published locations, 1 published npc
+      // fixture: 1 published faction, 1 published geography, 2 published locations, 1 published npc
       expect(byType).toEqual({
         faction: 1,
+        geography: 1,
         location: 2,
         npc: 1,
       });
@@ -130,6 +131,7 @@ describe("vault loaders", () => {
       const byType = Object.fromEntries(counts.map((c) => [c.type, c.count]));
       expect(byType).toEqual({
         faction: 1,
+        geography: 1,
         location: 2,
         npc: 1,
       });
@@ -138,9 +140,10 @@ describe("vault loaders", () => {
     it("returns full counts for a GM (includes draft + gm-only)", async () => {
       const counts = await listCategoryCounts(db, gm);
       const byType = Object.fromEntries(counts.map((c) => [c.type, c.count]));
-      // fixture: 1 faction, 2 locations, 3 npcs (1 published + 1 draft + 1 gm-only)
+      // fixture: 1 faction, 1 geography, 2 locations, 3 npcs (published + draft + gm-only)
       expect(byType).toEqual({
         faction: 1,
+        geography: 1,
         location: 2,
         npc: 3,
       });
@@ -155,8 +158,8 @@ describe("vault loaders", () => {
   describe("getSiteStats", () => {
     it("returns raw totals across the vault regardless of visibility", async () => {
       const stats = await getSiteStats(db);
-      // fixture: 1 faction + 2 locations + 3 npcs (published + draft + gm-only)
-      expect(stats.totalNodes).toBe(6);
+      // fixture: 1 faction + 1 geography + 2 locations + 3 npcs (published + draft + gm-only)
+      expect(stats.totalNodes).toBe(7);
       // fixture has 2 locations and 0 regions
       expect(stats.mappedPlaces).toBe(2);
       // matches existing listLexiconTerms assertion
