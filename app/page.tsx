@@ -64,7 +64,9 @@ export default async function Home() {
             destiny.
           </p>
           <div className="mt-12 flex justify-center gap-6">
-            <Button variant="primary">Explore Records</Button>
+            <Link href="/contents">
+              <Button variant="primary">Explore Records</Button>
+            </Link>
             <Button variant="secondary">World Atlas</Button>
           </div>
         </div>
