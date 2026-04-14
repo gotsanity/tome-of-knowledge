@@ -1,8 +1,42 @@
+import Link from "next/link";
 import type { LoadedNode } from "@/lib/vault/loaders";
 
 type Props = {
   node: LoadedNode;
+  nodeSlugs?: Set<string>;
 };
+
+type FacetLink = { label: string; href: string };
+
+/**
+ * Parse a frontmatter facet value into a displayable label and, when possible,
+ * a link target. Handles three shapes:
+ *   - `[[slug]]` / `[[slug|label]]` wikilinks (brackets always stripped)
+ *   - bare slug strings (e.g. `order-of-mending`)
+ *   - freeform prose (rendered as plain text)
+ *
+ * A link is produced only when the resolved slug exists in `nodeSlugs`, so
+ * hidden/unseen targets don't turn into dead links. This runs on every
+ * frontmatter-backed facet (species, affiliation, role, function, influence,
+ * goal, etc.) so no vault-imported value ever renders as literal `[[...]]`.
+ */
+export function parseFacetLink(
+  raw: string,
+  nodeSlugs?: Set<string>,
+): { label: string; href?: string } {
+  const trimmed = raw.trim();
+  const wikilink = trimmed.match(/^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/);
+  if (wikilink) {
+    const slug = wikilink[1].trim();
+    const label = (wikilink[2] ?? slug).trim();
+    if (nodeSlugs?.has(slug)) return { label, href: `/node/${slug}` };
+    return { label };
+  }
+  if (/^[a-z0-9][a-z0-9-]*$/.test(trimmed) && nodeSlugs?.has(trimmed)) {
+    return { label: trimmed, href: `/node/${trimmed}` };
+  }
+  return { label: trimmed };
+}
 
 function displayName(node: LoadedNode): string {
   // CWS convention: `name:` frontmatter is the canonical slug form.
@@ -34,65 +68,78 @@ const TYPE_LABEL: Record<LoadedNode["type"], string> = {
   pc: "Player Character",
 };
 
-function Facet({ label, value }: { label: string; value: string }) {
+function Facet({
+  label,
+  value,
+  link,
+}: {
+  label: string;
+  value: string;
+  link?: FacetLink;
+}) {
   return (
     <div className="flex flex-col">
       <span className="text-[10px] uppercase tracking-[0.2em] text-outline">
         {label}
       </span>
-      <span className="text-sm text-on-surface-variant">{value}</span>
+      {link ? (
+        <Link
+          href={link.href}
+          className="text-sm text-primary hover:underline decoration-1 underline-offset-4"
+        >
+          {link.label}
+        </Link>
+      ) : (
+        <span className="text-sm text-on-surface-variant">{value}</span>
+      )}
     </div>
   );
 }
 
-function typeFacets(node: LoadedNode): Array<{ label: string; value: string }> {
+type FacetEntry = { label: string; value: string; link?: FacetLink };
+
+function typeFacets(
+  node: LoadedNode,
+  nodeSlugs?: Set<string>,
+): Array<FacetEntry> {
   const fm = node.frontmatter;
-  const str = (k: string): string | null => {
-    const v = fm[k];
-    return typeof v === "string" && v.length > 0 ? v : null;
+  const facet = (label: string, key: string): FacetEntry | null => {
+    const v = fm[key];
+    if (typeof v !== "string" || v.length === 0) return null;
+    const parsed = parseFacetLink(v, nodeSlugs);
+    return {
+      label,
+      value: parsed.label,
+      link: parsed.href
+        ? { label: parsed.label, href: parsed.href }
+        : undefined,
+    };
   };
+  const collect = (
+    ...entries: Array<[label: string, key: string]>
+  ): FacetEntry[] => entries.flatMap(([l, k]) => (facet(l, k) ? [facet(l, k)!] : []));
 
   switch (node.type) {
     case "npc":
-    case "pc": {
-      const out: Array<{ label: string; value: string }> = [];
-      const species = str("species");
-      const faction = str("faction_affiliation");
-      const role = str("public_role");
-      if (species) out.push({ label: "Species", value: species });
-      if (faction) out.push({ label: "Affiliation", value: faction });
-      if (role) out.push({ label: "Role", value: role });
-      return out;
-    }
-    case "location": {
-      const out: Array<{ label: string; value: string }> = [];
-      const func = str("function");
-      const influence = str("influence");
-      if (func) out.push({ label: "Function", value: func });
-      if (influence) out.push({ label: "Influence", value: influence });
-      return out;
-    }
-    case "faction": {
-      const out: Array<{ label: string; value: string }> = [];
-      const goal = str("goal");
-      const influence = str("influence");
-      if (goal) out.push({ label: "Goal", value: goal });
-      if (influence) out.push({ label: "Influence", value: influence });
-      return out;
-    }
-    case "region": {
-      const out: Array<{ label: string; value: string }> = [];
-      const influence = str("influence");
-      if (influence) out.push({ label: "Influence", value: influence });
-      return out;
-    }
+    case "pc":
+      return collect(
+        ["Species", "species"],
+        ["Affiliation", "faction_affiliation"],
+        ["Role", "public_role"],
+      );
+    case "location":
+      return collect(["Function", "function"], ["Influence", "influence"]);
+    case "faction":
+      return collect(["Goal", "goal"], ["Influence", "influence"]);
+    case "region":
+      return collect(["Influence", "influence"]);
     default:
       return [];
   }
 }
 
-export function NodeHeader({ node }: Props) {
-  const facets = typeFacets(node);
+export function NodeHeader({ node, nodeSlugs }: Props) {
+  const facets = typeFacets(node, nodeSlugs);
   const typeLabel = TYPE_LABEL[node.type];
 
   return (
@@ -106,7 +153,12 @@ export function NodeHeader({ node }: Props) {
       {facets.length > 0 && (
         <div className="flex flex-wrap gap-8 border-b border-outline-variant/40 pb-6 mb-2">
           {facets.map((facet) => (
-            <Facet key={facet.label} label={facet.label} value={facet.value} />
+            <Facet
+              key={facet.label}
+              label={facet.label}
+              value={facet.value}
+              link={facet.link}
+            />
           ))}
         </div>
       )}

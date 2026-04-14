@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
-import { NodeHeader } from "@/app/components/NodeHeader";
+import { NodeHeader, parseFacetLink } from "@/app/components/NodeHeader";
 import type { LoadedNode } from "@/lib/vault/loaders";
 
 function makeNode(overrides: Partial<LoadedNode>): LoadedNode {
@@ -21,6 +21,43 @@ function makeNode(overrides: Partial<LoadedNode>): LoadedNode {
     ...overrides,
   };
 }
+
+describe("parseFacetLink", () => {
+  const slugs = new Set(["order-of-mending", "fort-ashby"]);
+
+  it("parses a bare wikilink with a resolving slug", () => {
+    expect(parseFacetLink("[[order-of-mending]]", slugs)).toEqual({
+      label: "order-of-mending",
+      href: "/node/order-of-mending",
+    });
+  });
+
+  it("parses a wikilink with a display label", () => {
+    expect(parseFacetLink("[[fort-ashby|Fort Ashby]]", slugs)).toEqual({
+      label: "Fort Ashby",
+      href: "/node/fort-ashby",
+    });
+  });
+
+  it("strips brackets even when the target is unknown", () => {
+    expect(parseFacetLink("[[greystone-coalition]]", slugs)).toEqual({
+      label: "greystone-coalition",
+    });
+  });
+
+  it("links a bare slug when it resolves in the known set", () => {
+    expect(parseFacetLink("order-of-mending", slugs)).toEqual({
+      label: "order-of-mending",
+      href: "/node/order-of-mending",
+    });
+  });
+
+  it("returns freeform prose unchanged with no link", () => {
+    expect(parseFacetLink("garrison commander", slugs)).toEqual({
+      label: "garrison commander",
+    });
+  });
+});
 
 describe("NodeHeader", () => {
   it("renders an NPC with species and faction affiliation", () => {
@@ -103,6 +140,113 @@ describe("NodeHeader", () => {
     expect(
       screen.getByRole("heading", { name: /The Compact/i }),
     ).toBeInTheDocument();
+  });
+
+  it("renders a wikilink affiliation as a link to the affiliated node", () => {
+    render(
+      <NodeHeader
+        node={makeNode({
+          type: "npc",
+          name: "Fort Commander",
+          frontmatter: {
+            faction_affiliation: "[[order-of-mending]]",
+          },
+        })}
+        nodeSlugs={new Set(["order-of-mending"])}
+      />,
+    );
+    const link = screen.getByRole("link", { name: /order-of-mending/i });
+    expect(link).toHaveAttribute("href", "/node/order-of-mending");
+    // raw brackets must never leak into the rendered output
+    expect(screen.queryByText(/\[\[/)).toBeNull();
+  });
+
+  it("uses the pipe label when the wikilink is aliased", () => {
+    render(
+      <NodeHeader
+        node={makeNode({
+          type: "npc",
+          name: "Test",
+          frontmatter: {
+            faction_affiliation: "[[order-of-mending|The Menders]]",
+          },
+        })}
+        nodeSlugs={new Set(["order-of-mending"])}
+      />,
+    );
+    expect(
+      screen.getByRole("link", { name: /the menders/i }),
+    ).toHaveAttribute("href", "/node/order-of-mending");
+  });
+
+  it("links bare-slug affiliations that resolve to a known node", () => {
+    render(
+      <NodeHeader
+        node={makeNode({
+          type: "npc",
+          name: "Test",
+          frontmatter: { faction_affiliation: "order-of-mending" },
+        })}
+        nodeSlugs={new Set(["order-of-mending"])}
+      />,
+    );
+    expect(
+      screen.getByRole("link", { name: /order-of-mending/i }),
+    ).toHaveAttribute("href", "/node/order-of-mending");
+  });
+
+  it("strips wikilink brackets even when the slug is not resolvable", () => {
+    render(
+      <NodeHeader
+        node={makeNode({
+          type: "npc",
+          name: "Test",
+          frontmatter: {
+            faction_affiliation: "[[greystone-coalition]]",
+          },
+        })}
+        nodeSlugs={new Set()}
+      />,
+    );
+    expect(screen.queryByRole("link")).toBeNull();
+    expect(screen.getByText(/greystone-coalition/)).toBeInTheDocument();
+    expect(screen.queryByText(/\[\[/)).toBeNull();
+  });
+
+  it("leaves freeform prose as plain text", () => {
+    render(
+      <NodeHeader
+        node={makeNode({
+          type: "npc",
+          name: "Zhar",
+          frontmatter: {
+            faction_affiliation:
+              "None current; Tareth primal-elf tribe by origin",
+          },
+        })}
+        nodeSlugs={new Set()}
+      />,
+    );
+    expect(
+      screen.getByText(/None current; Tareth primal-elf tribe by origin/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+
+  it("also linkifies non-affiliation facets like species when given a wikilink", () => {
+    render(
+      <NodeHeader
+        node={makeNode({
+          type: "npc",
+          name: "Test",
+          frontmatter: { species: "[[fort-ashby|Fort Ashby]]" },
+        })}
+        nodeSlugs={new Set(["fort-ashby"])}
+      />,
+    );
+    expect(
+      screen.getByRole("link", { name: /fort ashby/i }),
+    ).toHaveAttribute("href", "/node/fort-ashby");
   });
 
   it("is accessible (axe)", async () => {

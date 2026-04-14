@@ -52,7 +52,7 @@ export default async function NodePage({
       <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-12 parchment-texture">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8">
-            <NodeHeader node={node} />
+            <NodeHeader node={node} nodeSlugs={wikilinks.nodeSlugs} />
             <NodeBody
               sections={node.sections}
               bodyMd={node.bodyMd}
