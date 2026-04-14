@@ -8,7 +8,7 @@ test.describe("gm companion reveal", () => {
   test("anonymous user does not see the GM Notes panel on a node with a companion", async ({
     page,
   }) => {
-    await page.goto("/node/fort-commander");
+    await page.goto("/node/calytrix-blackwood");
     await expect(
       page.getByRole("heading", { name: /GM Notes/i }),
     ).toHaveCount(0);
@@ -17,7 +17,7 @@ test.describe("gm companion reveal", () => {
   test("anonymous user hitting the companion slug directly gets a 404", async ({
     page,
   }) => {
-    const response = await page.goto("/node/fort-commander-gm-notes");
+    const response = await page.goto("/node/calytrix-blackwood-gm-notes");
     expect(response?.status()).toBe(404);
   });
 
@@ -42,7 +42,7 @@ test.describe("gm companion reveal", () => {
         },
       });
 
-      await page.goto("/node/fort-commander");
+      await page.goto("/node/calytrix-blackwood");
       await expect(
         page.getByRole("heading", { name: /GM Notes/i }),
       ).toBeVisible();
@@ -65,7 +65,7 @@ test.describe("gm companion reveal", () => {
         },
       });
 
-      const response = await page.goto("/node/fort-commander-gm-notes");
+      const response = await page.goto("/node/calytrix-blackwood-gm-notes");
       expect(response?.status()).toBe(200);
     });
   });

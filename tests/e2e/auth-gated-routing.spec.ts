@@ -11,21 +11,21 @@ import { test, expect } from "@playwright/test";
  */
 test.describe("auth-gated routing", () => {
   test("anonymous user sees a published node", async ({ page }) => {
-    await page.goto("/node/fort-ashby");
+    await page.goto("/node/calytrix-blackwood");
     await expect(
-      page.getByRole("heading", { name: /Fort Ashby/i }),
+      page.getByRole("heading", { name: /Calytrix Blackwood/i }),
     ).toBeVisible();
   });
 
   test("anonymous user hitting a draft slug gets a 404", async ({ page }) => {
-    const response = await page.goto("/node/hidden-revenant");
+    const response = await page.goto("/node/broken-balance");
     expect(response?.status()).toBe(404);
   });
 
   test("anonymous user hitting a gm-only companion slug gets a 404", async ({
     page,
   }) => {
-    const response = await page.goto("/node/fort-commander-gm-notes");
+    const response = await page.goto("/node/calytrix-blackwood-gm-notes");
     expect(response?.status()).toBe(404);
   });
 

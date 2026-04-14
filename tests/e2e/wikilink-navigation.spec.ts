@@ -4,13 +4,15 @@ test.describe("wikilink navigation", () => {
   test("click a [[slug]] in body prose and land on /node/<slug>", async ({
     page,
   }) => {
-    await page.goto("/node/fort-commander");
-    const link = page.locator("main a[href='/node/fort-ashby']").first();
+    await page.goto("/node/calytrix-blackwood");
+    const link = page
+      .locator("main a[href='/node/rhiaah-blackwood']")
+      .first();
     await expect(link).toBeVisible();
     await link.click();
-    await page.waitForURL("**/node/fort-ashby");
+    await page.waitForURL("**/node/rhiaah-blackwood");
     await expect(
-      page.getByRole("heading", { name: /Fort Ashby/i }),
+      page.getByRole("heading", { name: /Rhiaah Blackwood/i }),
     ).toBeVisible();
   });
 
