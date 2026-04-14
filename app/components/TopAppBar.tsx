@@ -13,12 +13,12 @@ export function TopAppBar() {
             Tome of Knowledge
           </Link>
           <nav className="hidden md:flex items-center gap-10">
-            <a
-              href="#"
+            <Link
+              href="/contents#pc"
               className="text-stone-400 font-medium hover:text-primary transition-all"
             >
               Characters
-            </a>
+            </Link>
             <a
               href="#"
               className="text-stone-400 font-medium hover:text-primary transition-all"
