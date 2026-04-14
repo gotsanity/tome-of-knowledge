@@ -57,6 +57,7 @@ const TYPE_LABEL: Record<LoadedNode["type"], string> = {
   handout: "Handout",
   bestiary: "Bestiary Entry",
   pc: "Player Character",
+  item: "Item",
 };
 
 /**

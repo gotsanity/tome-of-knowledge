@@ -67,16 +67,14 @@ describe("Marginalia", () => {
     expect(screen.queryByText(/^affiliation$/i)).toBeNull();
   });
 
-  it("hides status and visibility_state badges from non-GM viewers", () => {
+  it("hides status and visibility badges from non-GM viewers", () => {
     render(
       <Marginalia
         node={makeNode({
           type: "npc",
-          frontmatter: {
-            species: "human",
-            status: "draft",
-            visibility_state: "gm-only",
-          },
+          status: "draft",
+          visibility: "gm-only",
+          frontmatter: { species: "human" },
         })}
         viewerIsGm={false}
       />,
@@ -85,22 +83,24 @@ describe("Marginalia", () => {
     expect(screen.queryByText(/^visibility:$/i)).toBeNull();
   });
 
-  it("shows status and visibility_state badges to GM viewers", () => {
+  it("shows status and visibility badges to GM viewers", () => {
     render(
       <Marginalia
         node={makeNode({
           type: "npc",
-          frontmatter: {
-            species: "human",
-            status: "draft",
-            visibility_state: "gm-only",
-          },
+          status: "draft",
+          visibility: "gm-only",
+          frontmatter: { species: "human" },
         })}
         viewerIsGm={true}
       />,
     );
+    // Status reads from the top-level LoadedNode.status column when no
+    // type-specific rule overrides it.
     expect(screen.getByText(/^status:$/i)).toBeTruthy();
     expect(screen.getByText("draft")).toBeTruthy();
+    // Visibility reads from the top-level LoadedNode.visibility column
+    // (v3.0 renamed this from `visibility_state`).
     expect(screen.getByText(/^visibility:$/i)).toBeTruthy();
     expect(screen.getByText("gm-only")).toBeTruthy();
   });

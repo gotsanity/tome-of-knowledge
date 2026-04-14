@@ -67,15 +67,19 @@ function frontmatterValue(
   node: LoadedNode,
   key: string,
 ): string | string[] | null {
-  // `type` is a top-level column on LoadedNode, not inside the frontmatter
-  // blob. `status` also lives top-level, but we let the type-specific rule
-  // resolve it from frontmatter when a type overrides the universal rule
-  // (plotline.status reads from frontmatter).
+  // `type` and `visibility` live as top-level columns on LoadedNode,
+  // populated by the importer from frontmatter. `status` is top-level too
+  // but type-specific rules may override it (e.g. plotline.status reads
+  // the frontmatter value directly), so we only fall back to the column
+  // when the frontmatter key is absent.
   if (key === "type") return node.type;
   if (key === "name") return node.name;
+  if (key === "visibility") return node.visibility;
 
   const fm = node.frontmatter[key];
   if (typeof fm === "string") return fm;
+  if (typeof fm === "boolean") return fm ? "true" : "false";
+  if (typeof fm === "number") return String(fm);
   if (Array.isArray(fm)) {
     const items = fm.filter((v): v is string => typeof v === "string");
     return items.length > 0 ? items : null;

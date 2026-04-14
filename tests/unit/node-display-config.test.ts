@@ -15,6 +15,12 @@ describe("node-display-config", () => {
       }
     });
 
+    it("the new v3.0 item type has rules defined", () => {
+      expect(TYPE_RULES).toHaveProperty("item");
+      const keys = TYPE_RULES.item.map((r) => r.key);
+      expect(keys).toEqual(["item_type", "sentient", "attuned_to"]);
+    });
+
     it("no type has duplicate field keys", () => {
       const dupes: string[] = [];
       for (const [type, rules] of Object.entries(TYPE_RULES)) {
@@ -29,27 +35,23 @@ describe("node-display-config", () => {
       expect(new Set(keys).size).toBe(keys.length);
     });
 
+    it("universal rules use v3.0 'visibility' key (not the legacy 'visibility_state')", () => {
+      const keys = UNIVERSAL_RULES.map((r) => r.key);
+      expect(keys).toContain("visibility");
+      expect(keys).not.toContain("visibility_state");
+    });
+
     it("badge rules only appear in the marginalia slot", () => {
-      const all = [
-        ...UNIVERSAL_RULES,
-        ...Object.values(TYPE_RULES).flat(),
-      ];
+      const all = [...UNIVERSAL_RULES, ...Object.values(TYPE_RULES).flat()];
       for (const rule of all) {
         if (rule.badge) expect(rule.slot).toBe("marginalia");
       }
     });
 
-    it("link / list flags only appear on slots that consume them", () => {
-      const all = [
-        ...UNIVERSAL_RULES,
-        ...Object.values(TYPE_RULES).flat(),
-      ];
+    it("list flags never appear on badge rules", () => {
+      const all = [...UNIVERSAL_RULES, ...Object.values(TYPE_RULES).flat()];
       for (const rule of all) {
-        if (rule.list) {
-          // lists make sense in linked-records and in blocks (bulleted) but
-          // not as badges (single enum value only)
-          expect(rule.badge).not.toBe(true);
-        }
+        if (rule.list) expect(rule.badge).not.toBe(true);
       }
     });
   });
@@ -62,19 +64,42 @@ describe("node-display-config", () => {
       );
     });
 
-    it("appends type-specific rules after universal rules", () => {
+    it("v3.0 npc only has species and faction_affiliation in frontmatter", () => {
       const rules = rulesForType("npc");
       expect(rules[0].key).toBe("type");
-      const npcKeys = rules.slice(UNIVERSAL_RULES.length).map((r) => r.key);
-      expect(npcKeys).toEqual([
+      const npcKeys = rules
+        .slice(UNIVERSAL_RULES.length)
+        .map((r) => r.key);
+      expect(npcKeys).toEqual(["species", "faction_affiliation"]);
+    });
+
+    it("v3.0 pc includes the new subclass and heritage fields", () => {
+      const rules = rulesForType("pc");
+      const pcKeys = rules.slice(UNIVERSAL_RULES.length).map((r) => r.key);
+      expect(pcKeys).toEqual([
+        "player",
+        "level",
+        "class",
+        "subclass",
         "species",
+        "heritage",
         "faction_affiliation",
-        "public_role",
-        "influence",
-        "motivation",
-        "private_goal",
-        "weak_point",
+        "pronouns",
       ]);
+    });
+
+    it("types that moved all content to body sections have no type-specific rules", () => {
+      // v3.0 dropped type-specific frontmatter for these types entirely —
+      // their content lives in body sections rendered by NodeBody.
+      const noFrontmatterTypes = [
+        "location",
+        "faction",
+        "campaign-frame",
+        "world-overview",
+      ];
+      for (const t of noFrontmatterTypes) {
+        expect(TYPE_RULES[t]).toEqual([]);
+      }
     });
 
     it("lets a type rule override a universal rule with the same key", () => {
@@ -99,46 +124,32 @@ describe("node-display-config", () => {
       const p = partitionRulesForViewer("npc", true);
       const badgeKeys = p.marginaliaBadges.map((r) => r.key);
       expect(badgeKeys).toEqual(
-        expect.arrayContaining(["status", "visibility_state"]),
+        expect.arrayContaining(["status", "visibility"]),
       );
     });
 
-    it("hides GM-only rules entirely from non-GM viewers", () => {
-      const gm = partitionRulesForViewer("npc", true);
+    it("hides GM-only universal badges entirely from non-GM viewers", () => {
       const pub = partitionRulesForViewer("npc", false);
-
-      // status + visibility_state badges gone for public viewer
       expect(pub.marginaliaBadges).toEqual([]);
-      expect(gm.marginaliaBadges.length).toBeGreaterThan(0);
-
-      // gm-only npc blocks (motivation, private_goal, weak_point) gone
-      // for public viewer
-      expect(pub.blocksGm).toEqual([]);
-      expect(gm.blocksGm.map((r) => r.key)).toEqual([
-        "motivation",
-        "private_goal",
-        "weak_point",
-      ]);
-
-      // public-only npc blocks still visible to the public viewer
-      expect(pub.blocksPublic.map((r) => r.key)).toEqual([
-        "public_role",
-        "influence",
-      ]);
     });
 
     it("puts linked-records rules into linkedRecords", () => {
       const p = partitionRulesForViewer("event", false);
       const keys = p.linkedRecords.map((r) => r.key);
-      expect(keys).toEqual(["actors", "linked_nodes"]);
+      expect(keys).toEqual(["actors"]);
     });
 
     it("plotline.status survives as a row for non-GM viewers (type override)", () => {
       const p = partitionRulesForViewer("plotline", false);
       const rowKeys = p.marginaliaRows.map((r) => r.key);
       expect(rowKeys).toContain("status");
-      // and is NOT in the gm badge bucket
       expect(p.marginaliaBadges.map((r) => r.key)).not.toContain("status");
+    });
+
+    it("item type's sentient field renders as a marginalia badge", () => {
+      const p = partitionRulesForViewer("item", false);
+      const badgeKeys = p.marginaliaBadges.map((r) => r.key);
+      expect(badgeKeys).toContain("sentient");
     });
   });
 });

@@ -98,4 +98,10 @@ export const CATEGORY_META: Record<NodeType, CategoryMeta> = {
     letter: "PC",
     blurb: "The protagonists whose choices write the next page.",
   },
+  item: {
+    type: "item",
+    label: "Items",
+    letter: "It",
+    blurb: "Named objects with weight, history, and narrative pull.",
+  },
 };

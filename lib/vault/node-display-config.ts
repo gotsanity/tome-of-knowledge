@@ -1,25 +1,26 @@
 /**
  * Per-type display config for /node/[slug] pages.
  *
- * Maps each frontmatter field to one of three sidebar slots — marginalia
- * (boxed label/value rows), block (Translator's-Note-style quote card), or
- * linked-records (icon + title + relationship list). The page renderer is
- * type-agnostic and iterates these rules; there is no per-type branching in
- * components. To add a new field, add a rule here.
+ * Maps each frontmatter field to one of two sidebar slots — marginalia
+ * (boxed label/value rows) or linked-records (icon + title + relationship
+ * list). The page renderer is type-agnostic and iterates these rules; no
+ * per-type branching in components. To add a new field, add a rule here.
  *
- * Source of truth: frontmatter-schema.md at repo root (annotated by the
- * product owner). Keep this file in lockstep with those annotations.
+ * Source of truth: CWS document-types.md v3.0. In v3.0 most of what used
+ * to be type-specific frontmatter moved into body sections (rendered by
+ * NodeBody) or into the paired `gm-only` companion node. The display
+ * config only carries rules for fields that are still actually
+ * frontmatter in v3.0.
  */
 
-export type NodeDisplaySlot = "marginalia" | "block" | "linked-records";
+export type NodeDisplaySlot = "marginalia" | "linked-records";
 
 /**
  * A field-level rule. `key` is the frontmatter field name; `slot` decides
  * which sidebar region it renders into. `link` resolves wikilinks against
  * the node graph. `list` means the field value is an array. `gmOnly` gates
  * the rule behind a GM viewer. `badge` on a marginalia rule renders a chip
- * rather than a label/value row. `render` on a marginalia rule lets callers
- * format the displayed value (the raw string is always passed through).
+ * rather than a label/value row.
  */
 export type FieldRule = {
   key: string;
@@ -33,8 +34,13 @@ export type FieldRule = {
 
 /**
  * Universal rules that apply to every node type unless a type-specific rule
- * overrides the same `key`. Today only `status` is overridden (plotline has
- * its own status enum that renders as a marginalia row instead of a badge).
+ * overrides the same `key`. Today only `status` is overridden — plotline
+ * has its own content-bearing status enum that renders as a visible row
+ * rather than a GM-only badge.
+ *
+ * `visibility` reads from the top-level `LoadedNode.visibility` column
+ * (populated by the importer) — see `frontmatterValue` in Marginalia.tsx.
+ * This is v3 terminology; v1 called the field `visibility_state`.
  */
 export const UNIVERSAL_RULES: readonly FieldRule[] = [
   { key: "type", slot: "marginalia", label: "Type" },
@@ -46,7 +52,7 @@ export const UNIVERSAL_RULES: readonly FieldRule[] = [
     gmOnly: true,
   },
   {
-    key: "visibility_state",
+    key: "visibility",
     slot: "marginalia",
     label: "Visibility",
     badge: true,
@@ -55,49 +61,44 @@ export const UNIVERSAL_RULES: readonly FieldRule[] = [
 ] as const;
 
 /**
- * Per-type field rules. Keyed by frontmatter `type` value (a string — the
- * app's NodeType enum is a subset, but this config accepts a superset so
- * future types can be added without touching the DB schema first). Any type
- * not listed here renders only universal rules.
+ * Per-type field rules. Keyed by frontmatter `type` value. Any type not
+ * listed here renders only universal rules.
  *
- * Ordering within each type determines marginalia/block/linked-records
- * render order within their respective regions. Within marginalia the
- * universal rules render first (type, then badges) followed by the
- * type-specific rules in declared order. Within blocks, public blocks
- * render first and GM-only blocks render below a divider.
+ * Ordering within each type determines marginalia / linked-records render
+ * order within their respective regions. Universal rules render before
+ * type-specific rules inside marginalia.
+ *
+ * v3.0 note: types with an empty rule list have no type-specific
+ * frontmatter at all — all their content lives in body sections. These
+ * pages render only the universal marginalia rows (`Type` link + GM
+ * badges) plus any `related[]` linked records.
  */
 export const TYPE_RULES: Record<string, readonly FieldRule[]> = {
   bestiary: [
     { key: "creature_type", slot: "marginalia", label: "Creature Type" },
   ],
 
+  campaign: [],
+
   "campaign-frame": [],
 
   event: [
     { key: "timestamp", slot: "marginalia", label: "Timestamp" },
-    { key: "actors", slot: "linked-records", label: "Actor", list: true, link: true },
     {
-      key: "linked_nodes",
+      key: "actors",
       slot: "linked-records",
-      label: "Linked",
+      label: "Actor",
       list: true,
       link: true,
     },
   ],
 
-  faction: [
-    { key: "goal", slot: "block", label: "Goal", gmOnly: true },
-  ],
+  faction: [],
 
   geography: [
     { key: "geography_type", slot: "marginalia", label: "Feature Type" },
     { key: "climate", slot: "marginalia", label: "Climate" },
-    {
-      key: "navigation_difficulty",
-      slot: "marginalia",
-      label: "Navigation",
-    },
-    { key: "scale", slot: "block", label: "Scale" },
+    { key: "navigation_difficulty", slot: "marginalia", label: "Navigation" },
     {
       key: "boundaries",
       slot: "linked-records",
@@ -107,6 +108,8 @@ export const TYPE_RULES: Record<string, readonly FieldRule[]> = {
     },
   ],
 
+  handout: [],
+
   homebrew: [
     { key: "homebrew_type", slot: "marginalia", label: "Homebrew Type" },
     { key: "system", slot: "marginalia", label: "Game System" },
@@ -114,17 +117,21 @@ export const TYPE_RULES: Record<string, readonly FieldRule[]> = {
     { key: "inspired_by", slot: "marginalia", label: "Inspired By" },
   ],
 
-  location: [
-    { key: "function", slot: "block", label: "Function" },
-    { key: "immediate_tension", slot: "block", label: "Immediate Tension" },
+  // v3.0 new type.
+  item: [
+    { key: "item_type", slot: "marginalia", label: "Item Type" },
+    { key: "sentient", slot: "marginalia", label: "Sentient", badge: true },
     {
-      key: "physical_description",
-      slot: "block",
-      label: "Physical Description",
+      key: "attuned_to",
+      slot: "linked-records",
+      label: "Attuned to",
+      link: true,
     },
-    { key: "regular_occupants", slot: "block", label: "Regular Occupants" },
-    { key: "secrets", slot: "block", label: "Secrets", gmOnly: true },
   ],
+
+  location: [],
+
+  lore: [],
 
   npc: [
     { key: "species", slot: "marginalia", label: "Species", link: true },
@@ -134,18 +141,15 @@ export const TYPE_RULES: Record<string, readonly FieldRule[]> = {
       label: "Affiliation",
       link: true,
     },
-    { key: "public_role", slot: "block", label: "Public Role" },
-    { key: "influence", slot: "block", label: "Influence" },
-    { key: "motivation", slot: "block", label: "Motivation", gmOnly: true },
-    { key: "private_goal", slot: "block", label: "Private Goal", gmOnly: true },
-    { key: "weak_point", slot: "block", label: "Weak Point", gmOnly: true },
   ],
 
   pc: [
     { key: "player", slot: "marginalia", label: "Player" },
     { key: "level", slot: "marginalia", label: "Level" },
     { key: "class", slot: "marginalia", label: "Class", link: true },
+    { key: "subclass", slot: "marginalia", label: "Subclass", link: true },
     { key: "species", slot: "marginalia", label: "Species", link: true },
+    { key: "heritage", slot: "marginalia", label: "Heritage", link: true },
     {
       key: "faction_affiliation",
       slot: "marginalia",
@@ -153,9 +157,6 @@ export const TYPE_RULES: Record<string, readonly FieldRule[]> = {
       link: true,
     },
     { key: "pronouns", slot: "marginalia", label: "Pronouns" },
-    { key: "motivation", slot: "block", label: "Motivation" },
-    { key: "private_goal", slot: "block", label: "Private Goal", gmOnly: true },
-    { key: "weak_point", slot: "block", label: "Weak Point", gmOnly: true },
   ],
 
   plotline: [
@@ -166,18 +167,7 @@ export const TYPE_RULES: Record<string, readonly FieldRule[]> = {
     // abandoned).
     { key: "status", slot: "marginalia", label: "Status" },
     { key: "phase", slot: "marginalia", label: "Phase" },
-    {
-      key: "pc_affiliation",
-      slot: "marginalia",
-      label: "PC",
-      link: true,
-    },
-    {
-      key: "faction_affiliation",
-      slot: "block",
-      label: "Faction Affiliation",
-    },
-    { key: "stakes", slot: "block", label: "Stakes" },
+    { key: "pc_affiliation", slot: "marginalia", label: "PC", link: true },
     {
       key: "depends_on",
       slot: "linked-records",
@@ -189,7 +179,11 @@ export const TYPE_RULES: Record<string, readonly FieldRule[]> = {
 
   region: [
     { key: "identity", slot: "marginalia", label: "Identity" },
-    { key: "dominant_conflict", slot: "marginalia", label: "Dominant Conflict" },
+    {
+      key: "dominant_conflict",
+      slot: "marginalia",
+      label: "Dominant Conflict",
+    },
     { key: "key_resource", slot: "marginalia", label: "Key Resource" },
     {
       key: "cultural_tendency",
@@ -210,8 +204,8 @@ export const TYPE_RULES: Record<string, readonly FieldRule[]> = {
 
   religion: [
     { key: "public_standing", slot: "marginalia", label: "Public Standing" },
-    { key: "denominations", slot: "marginalia", label: "Denominations" },
     { key: "ethics", slot: "marginalia", label: "Ethics" },
+    { key: "denominations", slot: "marginalia", label: "Denominations" },
   ],
 
   species: [],
@@ -226,30 +220,13 @@ export const TYPE_RULES: Record<string, readonly FieldRule[]> = {
     },
   ],
 
-  "world-overview": [
-    { key: "premise", slot: "block", label: "Premise" },
-    { key: "themes", slot: "block", label: "Themes", list: true },
-    { key: "world_rules", slot: "block", label: "World Rules", list: true },
-    { key: "core_tensions", slot: "block", label: "Core Tensions", list: true },
-    { key: "prohibited", slot: "block", label: "Prohibited", list: true },
-    { key: "tone_profile", slot: "block", label: "Tone Profile" },
-    { key: "cosmology", slot: "block", label: "Cosmology" },
-  ],
-
-  // Types with no type-specific rules: lore, handout, campaign.
-  // Only universal rules render for these.
-  lore: [],
-  handout: [],
-  campaign: [],
+  "world-overview": [],
 };
 
 /**
  * Fallback relationship label used by LinkedRecords for field-sourced
  * entries that have no typed relationship attached (event.actors,
- * event.linked_nodes, geography.boundaries, system.who_controls, etc.). The
- * user decided these all read as "Associated with" rather than the literal
- * field-name-humanized label — one neutral phrase reads cleaner than a
- * mix of per-field verbs.
+ * geography.boundaries, system.who_controls, etc.).
  */
 export const LINKED_RECORDS_FALLBACK_LABEL = "Associated with";
 
@@ -268,17 +245,14 @@ export function rulesForType(type: string): readonly FieldRule[] {
 }
 
 /**
- * Partition the effective rules for a node into the three sidebar slots,
- * honoring GM-only gating. Marginalia rules are further split between
- * top-line rows (the universal `type` row and other non-badge rules) and
- * trailing badges so the renderer can place them at the top vs. bottom of
- * the card without re-scanning the list.
+ * Partition the effective rules for a node into renderable buckets,
+ * honoring GM-only gating. Marginalia rules split between top-line rows
+ * and trailing badges so the renderer can place badges at the bottom of
+ * the card without re-scanning.
  */
 export type PartitionedRules = {
   marginaliaRows: FieldRule[];
   marginaliaBadges: FieldRule[];
-  blocksPublic: FieldRule[];
-  blocksGm: FieldRule[];
   linkedRecords: FieldRule[];
 };
 
@@ -290,8 +264,6 @@ export function partitionRulesForViewer(
   const result: PartitionedRules = {
     marginaliaRows: [],
     marginaliaBadges: [],
-    blocksPublic: [],
-    blocksGm: [],
     linkedRecords: [],
   };
   for (const rule of rules) {
@@ -299,9 +271,6 @@ export function partitionRulesForViewer(
     if (rule.slot === "marginalia") {
       if (rule.badge) result.marginaliaBadges.push(rule);
       else result.marginaliaRows.push(rule);
-    } else if (rule.slot === "block") {
-      if (rule.gmOnly) result.blocksGm.push(rule);
-      else result.blocksPublic.push(rule);
     } else {
       result.linkedRecords.push(rule);
     }

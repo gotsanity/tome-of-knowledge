@@ -64,6 +64,8 @@ describe("computeLinkedRecords", () => {
   });
 
   it("layers event.actors as linked records with the fallback label", () => {
+    // v3.0: event.linked_nodes was removed from the schema; only
+    // event.actors remains as a frontmatter-sourced linked-records field.
     const entries = computeLinkedRecords(
       makeNode({
         type: "event",

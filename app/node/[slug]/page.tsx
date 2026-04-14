@@ -3,7 +3,6 @@ import { AppShell } from "@/app/components";
 import { NodeHeader } from "@/app/components/NodeHeader";
 import { NodeBody } from "@/app/components/NodeBody";
 import { Marginalia } from "@/app/components/Marginalia";
-import { BlockStack } from "@/app/components/NodeBlock";
 import {
   LinkedRecords,
   computeLinkedRecords,
@@ -128,7 +127,6 @@ export default async function NodePage({
                 viewerIsGm={viewerIsGm}
                 nodeSlugs={wikilinks.nodeSlugs}
               />
-              <BlockStack node={node} viewerIsGm={viewerIsGm} />
               <LinkedRecords entries={linkedRecords} />
             </div>
           </aside>
