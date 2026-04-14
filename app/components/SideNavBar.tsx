@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { loadSidebarSections } from "@/lib/nav/sidebar-data";
+import { getNavPreferences } from "@/lib/nav/preferences";
+import type { Viewer } from "@/lib/vault/can-see";
+import { SideNavSubTree } from "./SideNavSubTree";
 
 export type NavKey = "library" | "contents" | "scribe" | "archived";
 
@@ -25,6 +30,16 @@ const ITEMS: NavItem[] = [
 export async function SideNavBar({ active }: { active: NavKey }) {
   const session = await auth();
   const user = session?.user;
+  const viewer: Viewer = user ? { role: user.role } : null;
+  const [sections, prefs] = await Promise.all([
+    active === "contents"
+      ? loadSidebarSections(db, viewer)
+      : Promise.resolve([]),
+    active === "contents"
+      ? getNavPreferences(db, user?.id ?? null)
+      : Promise.resolve({ contentsExpanded: true }),
+  ]);
+
   const personaName = user?.displayName ?? user?.username ?? "Elder Thorne";
   const personaRole = user
     ? user.role === "gm"
@@ -54,22 +69,35 @@ export async function SideNavBar({ active }: { active: NavKey }) {
           New Entry
         </button>
       </div>
-      <nav className="flex flex-col h-full py-8 space-y-2 overflow-y-auto no-scrollbar">
+      <nav className="flex flex-col h-full py-8 space-y-1 overflow-y-auto no-scrollbar">
         {ITEMS.map((item) => {
           const isActive = item.key === active;
           const classes = isActive
             ? "flex items-center gap-4 text-primary font-bold border-r-2 border-primary bg-stone-800/50 py-3 px-6 transition-colors translate-x-1"
             : "flex items-center gap-4 text-stone-400 py-3 px-6 hover:bg-stone-800 hover:text-primary transition-colors";
+          const hasSubTree =
+            item.key === "contents" && isActive && sections.length > 0;
           return (
-            <Link key={item.key} href={item.href} className={classes}>
-              <span
-                className="material-symbols-outlined"
-                style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
-              >
-                {item.icon}
-              </span>
-              <span className="text-lg">{item.label}</span>
-            </Link>
+            <div key={item.key}>
+              <Link href={item.href} className={classes}>
+                <span
+                  className="material-symbols-outlined"
+                  style={
+                    isActive ? { fontVariationSettings: "'FILL' 1" } : undefined
+                  }
+                >
+                  {item.icon}
+                </span>
+                <span className="text-lg">{item.label}</span>
+              </Link>
+              {hasSubTree && (
+                <SideNavSubTree
+                  sections={sections}
+                  initialContentsExpanded={prefs.contentsExpanded}
+                  isAuthenticated={Boolean(user?.id)}
+                />
+              )}
+            </div>
           );
         })}
       </nav>

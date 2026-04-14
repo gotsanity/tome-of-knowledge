@@ -243,3 +243,13 @@ export const nodeThemes = sqliteTable(
     pk: primaryKey({ columns: [table.nodeId, table.themeId] }),
   }),
 );
+
+export const userNavPreferences = sqliteTable("user_nav_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  contentsExpanded: integer("contents_expanded").notNull().default(1),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(unixepoch() * 1000)`),
+});
