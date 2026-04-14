@@ -63,13 +63,12 @@ describe("loadSidebarSections", () => {
     expect(npc?.nodes.map((n) => n.slug)).toEqual(["fort-commander"]);
   });
 
-  it("includes drafts and gm-only for a GM", async () => {
+  it("includes drafts for a GM but excludes gm-notes companions", async () => {
     const sections = await loadSidebarSections(db, gm);
     const npc = sections.find((s) => s.type === "npc");
-    expect(npc?.count).toBe(3);
+    expect(npc?.count).toBe(2);
     expect(npc?.nodes.map((n) => n.slug).sort()).toEqual([
       "fort-commander",
-      "fort-commander-gm-notes",
       "hidden-revenant",
     ]);
   });

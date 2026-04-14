@@ -1,4 +1,4 @@
-import { eq, inArray, asc, sql } from "drizzle-orm";
+import { and, eq, inArray, notInArray, isNotNull, asc, sql } from "drizzle-orm";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import * as schema from "@/lib/db/schema";
 import { NODE_TYPES } from "@/lib/db/schema";
@@ -89,6 +89,23 @@ function hydrateNode(
   };
 }
 
+// A "companion" is a gm-notes node whose slug is referenced by another
+// node's `companionSlug`. Companions only belong inline at the bottom of
+// their parent page, never in nav, list, count, or related-link surfaces.
+async function getCompanionSlugSet(
+  db: LibSQLDatabase<typeof schema>,
+): Promise<Set<string>> {
+  const rows = await db
+    .select({ companionSlug: schema.nodes.companionSlug })
+    .from(schema.nodes)
+    .where(isNotNull(schema.nodes.companionSlug));
+  return new Set(
+    rows
+      .map((r) => r.companionSlug)
+      .filter((s): s is string => typeof s === "string" && s.length > 0),
+  );
+}
+
 export async function getNode(
   db: LibSQLDatabase<typeof schema>,
   slug: string,
@@ -115,11 +132,14 @@ export async function listNodesByType(
   const visible: NodeVisibility[] = isGm(viewer)
     ? ["published", "draft", "gm-only"]
     : ["published"];
+  const companionSlugs = await getCompanionSlugSet(db);
   const rows = await db
     .select()
     .from(schema.nodes)
     .where(eq(schema.nodes.type, type));
-  const filtered = rows.filter((r) => visible.includes(r.visibility));
+  const filtered = rows.filter(
+    (r) => visible.includes(r.visibility) && !companionSlugs.has(r.slug),
+  );
   // Sections are optional for list views; hydrate without them.
   return filtered.map((r) => hydrateNode(r, []));
 }
@@ -133,17 +153,22 @@ export async function getSiteStats(
   eventsRecorded: number;
 }> {
   const countExpr = sql<number>`count(*)`;
+  const companionList = Array.from(await getCompanionSlugSet(db));
+  const notCompanion =
+    companionList.length > 0
+      ? notInArray(schema.nodes.slug, companionList)
+      : undefined;
   const [totalRows, placesRows, lexiconRows, eventsRows] = await Promise.all([
-    db.select({ count: countExpr }).from(schema.nodes),
+    db.select({ count: countExpr }).from(schema.nodes).where(notCompanion),
     db
       .select({ count: countExpr })
       .from(schema.nodes)
-      .where(inArray(schema.nodes.type, ["region", "location"])),
+      .where(and(inArray(schema.nodes.type, ["region", "location"]), notCompanion)),
     db.select({ count: countExpr }).from(schema.lexiconTerms),
     db
       .select({ count: countExpr })
       .from(schema.nodes)
-      .where(eq(schema.nodes.type, "event")),
+      .where(and(eq(schema.nodes.type, "event"), notCompanion)),
   ]);
   return {
     totalNodes: Number(totalRows[0]?.count ?? 0),
@@ -160,13 +185,21 @@ export async function listCategoryCounts(
   const visible: NodeVisibility[] = isGm(viewer)
     ? ["published", "draft", "gm-only"]
     : ["published"];
+  const companionList = Array.from(await getCompanionSlugSet(db));
   const rows = await db
     .select({
       type: schema.nodes.type,
       count: sql<number>`count(*)`.as("count"),
     })
     .from(schema.nodes)
-    .where(inArray(schema.nodes.visibility, visible))
+    .where(
+      and(
+        inArray(schema.nodes.visibility, visible),
+        companionList.length > 0
+          ? notInArray(schema.nodes.slug, companionList)
+          : undefined,
+      ),
+    )
     .groupBy(schema.nodes.type);
   const byType = new Map<NodeType, number>();
   for (const row of rows) {
@@ -205,6 +238,7 @@ export async function getRelated(
     .from(schema.nodes)
     .where(inArray(schema.nodes.slug, neighborSlugs));
   const bySlug = new Map(neighborRows.map((r) => [r.slug, r]));
+  const companionSlugs = await getCompanionSlugSet(db);
 
   const out: RelatedNode[] = [];
   const seen = new Set<string>();
@@ -216,6 +250,7 @@ export async function getRelated(
     const neighborSlug = direction === "outgoing" ? rel.toSlug : rel.fromSlug;
     const neighbor = bySlug.get(neighborSlug);
     if (!neighbor) return;
+    if (companionSlugs.has(neighbor.slug)) return;
     if (!canSee(viewer, neighbor)) return;
     const key = `${direction}:${neighborSlug}:${rel.relType}`;
     if (seen.has(key)) return;

@@ -102,14 +102,10 @@ describe("vault loaders", () => {
       expect(slugs).toEqual(["fort-commander"]);
     });
 
-    it("lists published + draft + gm-only npcs for a GM", async () => {
+    it("lists published + draft npcs for a GM, excluding gm-notes companions", async () => {
       const npcs = await listNodesByType(db, "npc", gm);
       const slugs = npcs.map((n) => n.slug).sort();
-      expect(slugs).toEqual([
-        "fort-commander",
-        "fort-commander-gm-notes",
-        "hidden-revenant",
-      ]);
+      expect(slugs).toEqual(["fort-commander", "hidden-revenant"]);
     });
   });
 
@@ -137,15 +133,17 @@ describe("vault loaders", () => {
       });
     });
 
-    it("returns full counts for a GM (includes draft + gm-only)", async () => {
+    it("returns full counts for a GM (includes draft, excludes gm-notes companions)", async () => {
       const counts = await listCategoryCounts(db, gm);
       const byType = Object.fromEntries(counts.map((c) => [c.type, c.count]));
-      // fixture: 1 faction, 1 geography, 2 locations, 3 npcs (published + draft + gm-only)
+      // fixture: 1 faction, 1 geography, 2 locations, 2 npcs
+      // (published fort-commander + draft hidden-revenant;
+      //  fort-commander-gm-notes is a companion and excluded)
       expect(byType).toEqual({
         faction: 1,
         geography: 1,
         location: 2,
-        npc: 3,
+        npc: 2,
       });
     });
 
@@ -156,10 +154,11 @@ describe("vault loaders", () => {
   });
 
   describe("getSiteStats", () => {
-    it("returns raw totals across the vault regardless of visibility", async () => {
+    it("returns raw totals across the vault, excluding gm-notes companions", async () => {
       const stats = await getSiteStats(db);
-      // fixture: 1 faction + 1 geography + 2 locations + 3 npcs (published + draft + gm-only)
-      expect(stats.totalNodes).toBe(7);
+      // fixture: 1 faction + 1 geography + 2 locations + 2 npcs (published + draft);
+      // fort-commander-gm-notes is a companion and excluded from totals
+      expect(stats.totalNodes).toBe(6);
       // fixture has 2 locations and 0 regions
       expect(stats.mappedPlaces).toBe(2);
       // matches existing listLexiconTerms assertion
@@ -186,6 +185,15 @@ describe("vault loaders", () => {
     it("returns the draft member to a GM", async () => {
       const related = await getRelated(db, "order-of-mending", gm);
       expect(related.map((r) => r.slug)).toContain("hidden-revenant");
+    });
+
+    it("excludes gm-notes companions even when a GM links to them", async () => {
+      // hidden-revenant's body wikilinks to fort-commander-gm-notes, which
+      // creates a MENTIONS edge. Companions should still be filtered out.
+      const related = await getRelated(db, "hidden-revenant", gm);
+      expect(related.map((r) => r.slug)).not.toContain(
+        "fort-commander-gm-notes",
+      );
     });
   });
 

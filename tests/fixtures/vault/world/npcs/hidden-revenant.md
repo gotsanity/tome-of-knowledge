@@ -18,4 +18,4 @@ A draft NPC: not yet ready for publication. Only visible to the GM.
 
 ## Notes
 
-Needs more work before this goes live.
+Needs more work before this goes live. See [[fort-commander-gm-notes]] for related GM context.
