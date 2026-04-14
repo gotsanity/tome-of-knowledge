@@ -6,15 +6,20 @@ import { getSessionUser } from "@/lib/auth-helpers";
 
 type AppShellProps = {
   active: NavKey;
+  currentNodeSlug?: string;
   children: ReactNode;
 };
 
-export async function AppShell({ active, children }: AppShellProps) {
+export async function AppShell({
+  active,
+  currentNodeSlug,
+  children,
+}: AppShellProps) {
   const user = await getSessionUser();
 
   return (
     <div className="flex min-h-screen no-scrollbar">
-      <SideNavBar active={active} />
+      <SideNavBar active={active} currentNodeSlug={currentNodeSlug} />
       <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
         <TopAppBar />
         <main className="flex-1">{children}</main>

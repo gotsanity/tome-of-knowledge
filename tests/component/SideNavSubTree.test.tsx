@@ -10,8 +10,9 @@ vi.mock("@/lib/nav/actions", () => ({
     setNavItemExpandedAction(...args),
 }));
 
+let mockPathname = "/contents";
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/contents",
+  usePathname: () => mockPathname,
 }));
 
 vi.mock("next/link", () => ({
@@ -52,6 +53,7 @@ const SECTIONS: SidebarSection[] = [
 beforeEach(() => {
   setNavItemExpandedAction.mockReset();
   setNavItemExpandedAction.mockResolvedValue(undefined);
+  mockPathname = "/contents";
   window.localStorage.clear();
   // Stub IntersectionObserver — jsdom/happy-dom don't implement it
   class MockIO implements IntersectionObserver {
@@ -159,6 +161,31 @@ describe("SideNavSubTree", () => {
     await user.click(screen.getByRole("button", { name: /hide index/i }));
     expect(setNavItemExpandedAction).toHaveBeenCalledWith("contents", false);
     expect(window.localStorage.getItem("tome:nav:contents-expanded")).toBeNull();
+  });
+
+  it("force-expands TOC and highlights the active node when currentNodeSlug is set", () => {
+    mockPathname = "/node/bob";
+    window.localStorage.setItem("tome:nav:contents-expanded", "0");
+    render(
+      <SideNavSubTree
+        sections={SECTIONS}
+        initialContentsExpanded={false}
+        isAuthenticated={false}
+        currentNodeSlug="bob"
+      />,
+    );
+    // Subtree is forced open even though pref is collapsed
+    const npcCategory = screen.getByTestId("sidenav-category-npc");
+    expect(npcCategory).toBeInTheDocument();
+    expect(npcCategory).toHaveAttribute("aria-current", "true");
+    // The active node is rendered and marked
+    const activeNode = screen.getByTestId("sidenav-node-bob");
+    expect(activeNode).toHaveAttribute("aria-current", "page");
+    // The non-matching category is not marked active
+    expect(screen.getByTestId("sidenav-category-location")).not.toHaveAttribute(
+      "aria-current",
+      "true",
+    );
   });
 
   it("reconciles anonymous initial state with localStorage on mount", () => {

@@ -78,15 +78,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.displayName =
           (user as { displayName?: string | null }).displayName ?? null;
         token.role = ((user as { role?: Role }).role ?? "user") as Role;
+        return token;
+      }
+      // Subsequent JWT reads: verify the user row still exists. The DB can
+      // outlive or be wiped under a long-lived JWT cookie (e.g., volume reset),
+      // and downstream FKs referencing users.id will crash if we trust a stale
+      // id. Clearing the fields forces the session callback to treat the
+      // request as anonymous.
+      const maybeId = (token as { id?: string }).id;
+      if (maybeId) {
+        const row = await db.query.users.findFirst({
+          where: eq(schema.users.id, maybeId),
+          columns: { id: true },
+        });
+        if (!row) {
+          delete (token as { id?: string }).id;
+        }
       }
       return token;
     },
     async session({ session, token }) {
-      const t = token as unknown as AppJWT;
+      const t = token as unknown as Partial<AppJWT>;
+      if (!t.id) {
+        return { ...session, user: undefined } as unknown as typeof session;
+      }
       session.user.id = t.id;
-      session.user.username = t.username;
-      session.user.displayName = t.displayName;
-      session.user.role = t.role;
+      session.user.username = t.username ?? null;
+      session.user.displayName = t.displayName ?? null;
+      session.user.role = (t.role ?? "user") as Role;
       return session;
     },
   },

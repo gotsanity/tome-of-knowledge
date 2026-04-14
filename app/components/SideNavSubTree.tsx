@@ -19,6 +19,7 @@ type Props = {
   sections: SidebarSection[];
   initialContentsExpanded: boolean;
   isAuthenticated: boolean;
+  currentNodeSlug?: string;
 };
 
 function subscribeStorage(callback: () => void): () => void {
@@ -49,6 +50,7 @@ export function SideNavSubTree({
   sections,
   initialContentsExpanded,
   isAuthenticated,
+  currentNodeSlug,
 }: Props) {
   // Authoritative sources of truth:
   //   Authenticated → server-rendered `initialContentsExpanded` + optimistic local flips.
@@ -62,7 +64,16 @@ export function SideNavSubTree({
     storedFlag === null ? initialContentsExpanded : storedFlag === "1";
 
   const [authExpanded, setAuthExpanded] = useState(initialContentsExpanded);
-  const expanded = isAuthenticated ? authExpanded : localExpanded;
+  const prefExpanded = isAuthenticated ? authExpanded : localExpanded;
+  // When viewing a specific node, force the TOC open so the active node is
+  // visible regardless of the user's saved collapse preference.
+  const expanded = Boolean(currentNodeSlug) || prefExpanded;
+
+  const nodeCategory: NodeType | null = currentNodeSlug
+    ? (sections.find((s) =>
+        s.nodes.some((n) => n.slug === currentNodeSlug),
+      )?.type ?? null)
+    : null;
 
   const [activeCategory, setActiveCategory] = useState<NodeType | null>(null);
   const [, startTransition] = useTransition();
@@ -154,7 +165,8 @@ export function SideNavSubTree({
           className="mt-2 space-y-1 border-l border-stone-800/60 pl-3"
         >
           {sections.map((section) => {
-            const isActive = activeCategory === section.type;
+            const isActive =
+              activeCategory === section.type || nodeCategory === section.type;
             return (
               <li key={section.type}>
                 <Link
@@ -175,17 +187,26 @@ export function SideNavSubTree({
                 </Link>
                 {isActive && section.nodes.length > 0 && (
                   <ul className="mt-1 mb-2 space-y-0.5 border-l border-primary/20 pl-3">
-                    {section.nodes.map((node) => (
-                      <li key={node.slug}>
-                        <Link
-                          href={`/node/${node.slug}`}
-                          className="block py-0.5 text-xs text-stone-500 hover:text-primary transition-colors truncate focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60"
-                          data-testid={`sidenav-node-${node.slug}`}
-                        >
-                          {node.displayName}
-                        </Link>
-                      </li>
-                    ))}
+                    {section.nodes.map((node) => {
+                      const isCurrent = node.slug === currentNodeSlug;
+                      return (
+                        <li key={node.slug}>
+                          <Link
+                            href={`/node/${node.slug}`}
+                            className={
+                              "block py-0.5 text-xs transition-colors truncate focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60 " +
+                              (isCurrent
+                                ? "text-primary font-semibold"
+                                : "text-stone-500 hover:text-primary")
+                            }
+                            data-testid={`sidenav-node-${node.slug}`}
+                            aria-current={isCurrent ? "page" : undefined}
+                          >
+                            {node.displayName}
+                          </Link>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </li>

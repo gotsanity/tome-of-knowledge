@@ -27,15 +27,20 @@ const ITEMS: NavItem[] = [
   { key: "archived", href: "#", icon: "inventory_2", label: "Archived" },
 ];
 
-export async function SideNavBar({ active }: { active: NavKey }) {
+export async function SideNavBar({
+  active,
+  currentNodeSlug,
+}: {
+  active: NavKey;
+  currentNodeSlug?: string;
+}) {
   const session = await auth();
   const user = session?.user;
   const viewer: Viewer = user ? { role: user.role } : null;
+  const needsSections = active === "contents" || Boolean(currentNodeSlug);
   const [sections, prefs] = await Promise.all([
-    active === "contents"
-      ? loadSidebarSections(db, viewer)
-      : Promise.resolve([]),
-    active === "contents"
+    needsSections ? loadSidebarSections(db, viewer) : Promise.resolve([]),
+    needsSections
       ? getNavPreferences(db, user?.id ?? null)
       : Promise.resolve({ contentsExpanded: true }),
   ]);
@@ -76,7 +81,9 @@ export async function SideNavBar({ active }: { active: NavKey }) {
             ? "flex items-center gap-4 text-primary font-bold border-r-2 border-primary bg-stone-800/50 py-3 px-6 transition-colors translate-x-1"
             : "flex items-center gap-4 text-stone-400 py-3 px-6 hover:bg-stone-800 hover:text-primary transition-colors";
           const hasSubTree =
-            item.key === "contents" && isActive && sections.length > 0;
+            item.key === "contents" &&
+            sections.length > 0 &&
+            (isActive || Boolean(currentNodeSlug));
           return (
             <div key={item.key}>
               <Link href={item.href} className={classes}>
@@ -95,6 +102,7 @@ export async function SideNavBar({ active }: { active: NavKey }) {
                   sections={sections}
                   initialContentsExpanded={prefs.contentsExpanded}
                   isAuthenticated={Boolean(user?.id)}
+                  currentNodeSlug={currentNodeSlug}
                 />
               )}
             </div>
