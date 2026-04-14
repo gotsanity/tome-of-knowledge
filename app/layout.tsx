@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Newsreader } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "./components/SessionProvider";
+import { ErrorBufferInstaller } from "./components/ErrorBufferInstaller";
 
 const newsreader = Newsreader({
   subsets: ["latin"],
@@ -31,6 +32,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body text-on-surface antialiased">
+        <ErrorBufferInstaller />
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
