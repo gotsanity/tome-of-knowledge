@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { AppShell, Button, SectionHeading } from "./components";
+import {
+  AppShell,
+  Button,
+  LandingFooterActions,
+  SectionHeading,
+} from "./components";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-helpers";
 import { listCategoryCounts, getSiteStats } from "@/lib/vault/loaders";
@@ -268,18 +273,7 @@ export default async function Home() {
               ),
             )}
           </div>
-          <div className="flex gap-4">
-            {["share", "rss_feed"].map((icon) => (
-              <div
-                key={icon}
-                className="w-8 h-8 border border-stone-800 flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-lg">
-                  {icon}
-                </span>
-              </div>
-            ))}
-          </div>
+          <LandingFooterActions />
         </div>
       </section>
     </AppShell>

@@ -6,3 +6,4 @@ export { SectionHeading } from "./SectionHeading";
 export { SessionProvider } from "./SessionProvider";
 export { AccountMenu } from "./AccountMenu";
 export { LoginModal } from "./LoginModal";
+export { LandingFooterActions } from "./LandingFooterActions";
