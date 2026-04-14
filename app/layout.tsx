@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`dark ${newsreader.variable}`}>
+    <html lang="en" className={`dark scroll-smooth ${newsreader.variable}`}>
       <head>
         {/* eslint-disable-next-line @next/next/no-page-custom-font -- root layout; next/font does not support icon fonts */}
         <link

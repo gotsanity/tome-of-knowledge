@@ -70,18 +70,25 @@ export default async function Home() {
             <Button variant="secondary">World Atlas</Button>
           </div>
         </div>
-        <div className="relative z-10 pb-8 flex flex-col items-center gap-2 opacity-50">
+        <a
+          href="#lexicon"
+          aria-label="Scroll to the Lexicon section"
+          className="relative z-10 pb-8 flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60"
+        >
           <span className="text-[10px] uppercase tracking-widest text-primary">
             Scroll to Descend
           </span>
           <span className="material-symbols-outlined animate-bounce text-primary">
             keyboard_double_arrow_down
           </span>
-        </div>
+        </a>
       </section>
 
       {/* Lexicon Section — Bento Grid */}
-      <section className="max-w-[1400px] mx-auto px-12 py-24">
+      <section
+        id="lexicon"
+        className="scroll-mt-24 max-w-[1400px] mx-auto px-12 py-24"
+      >
         <SectionHeading
           title="The Lexicon"
           actions={
