@@ -107,6 +107,9 @@ export function SideNavSubTree({
           setActiveCategory(null);
           return;
         }
+        // Pick the target with the highest visible ratio; fall back to
+        // document order on ties (which happens often with the accordion
+        // layout where most sections collapse to a thin header row).
         let best: { id: string; ratio: number } | null = null;
         for (const target of targets) {
           const ratio = visible.get(target.id);
@@ -117,7 +120,7 @@ export function SideNavSubTree({
         }
         setActiveCategory((best?.id ?? null) as NodeType | null);
       },
-      { rootMargin: "-40% 0px -50% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
+      { threshold: [0, 0.25, 0.5, 0.75, 1] },
     );
     for (const target of targets) observer.observe(target);
     return () => observer.disconnect();

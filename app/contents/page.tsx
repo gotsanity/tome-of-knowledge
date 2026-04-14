@@ -1,69 +1,26 @@
-import Link from "next/link";
 import { AppShell } from "../components";
+import { ContentsAccordion, type AccordionSection } from "./ContentsAccordion";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-helpers";
-import { listNodesByType, type LoadedNode } from "@/lib/vault/loaders";
+import { listNodesByType } from "@/lib/vault/loaders";
 import { CATEGORY_META } from "@/lib/vault/categories";
 import { NODE_TYPES } from "@/lib/db/schema";
 import type { Viewer } from "@/lib/vault/can-see";
-
-const ROMAN_NUMERALS = [
-  "I.",
-  "II.",
-  "III.",
-  "IV.",
-  "V.",
-  "VI.",
-  "VII.",
-  "VIII.",
-  "IX.",
-  "X.",
-  "XI.",
-  "XII.",
-  "XIII.",
-  "XIV.",
-  "XV.",
-];
-
-function displayName(node: LoadedNode): string {
-  const raw = node.name;
-  if (/\s/.test(raw) || /[A-Z]/.test(raw)) return raw;
-  return raw
-    .split("-")
-    .filter((s) => s.length > 0)
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(" ");
-}
-
-function LedgerRow({ node }: { node: LoadedNode }) {
-  return (
-    <li className="group flex items-end">
-      <Link
-        href={`/node/${node.slug}`}
-        className="text-lg text-on-surface group-hover:text-primary transition-colors duration-300"
-      >
-        {displayName(node)}
-      </Link>
-      <span className="leader-dots" />
-      <span className="italic text-primary/60 text-sm uppercase tracking-widest">
-        {node.visibility === "published" ? "open" : node.visibility}
-      </span>
-    </li>
-  );
-}
 
 export default async function TableOfContentsPage() {
   const user = await getSessionUser();
   const viewer: Viewer = user ? { role: user.role } : null;
 
-  const sections = await Promise.all(
+  const rawSections = await Promise.all(
     NODE_TYPES.map(async (type) => ({
       type,
       label: CATEGORY_META[type].label,
       nodes: await listNodesByType(db, type, viewer),
     })),
   );
-  const populated = sections.filter((s) => s.nodes.length > 0);
+  const populated: AccordionSection[] = rawSections.filter(
+    (s) => s.nodes.length > 0,
+  );
 
   return (
     <AppShell active="contents">
@@ -108,35 +65,7 @@ export default async function TableOfContentsPage() {
             it.
           </p>
         ) : (
-          <div className="space-y-12">
-            {populated.map((section, idx) => (
-              <section key={section.type} id={section.type} className="scroll-mt-32">
-                <div className="flex items-center gap-4 mb-6">
-                  <span className="text-primary text-4xl font-bold leading-none">
-                    {ROMAN_NUMERALS[idx] ?? `${idx + 1}.`}
-                  </span>
-                  <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
-                    {section.label}
-                  </h2>
-                  <div className="flex-grow h-px bg-primary/20" />
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-outline">
-                    {section.nodes.length}{" "}
-                    {section.nodes.length === 1 ? "entry" : "entries"}
-                  </span>
-                </div>
-                <ul className="space-y-4">
-                  {section.nodes
-                    .slice()
-                    .sort((a, b) =>
-                      displayName(a).localeCompare(displayName(b)),
-                    )
-                    .map((node) => (
-                      <LedgerRow key={node.slug} node={node} />
-                    ))}
-                </ul>
-              </section>
-            ))}
-          </div>
+          <ContentsAccordion sections={populated} />
         )}
 
         <footer className="mt-24 border-t border-outline-variant/40 pt-12 flex flex-col items-center">
