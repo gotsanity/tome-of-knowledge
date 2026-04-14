@@ -41,18 +41,21 @@ test.describe("sidebar table of contents", () => {
   test("node page shows TOC expanded with current node marked active", async ({
     page,
   }) => {
+    // Pick any real node slug from the ToC main body (these always render,
+    // unlike the sidebar subtree which only populates when a category is
+    // active). Use the first /node/<slug> link inside the page main.
     await page.goto("/contents");
-    const firstNode = page.locator('[data-testid^="sidenav-node-"]').first();
-    await page.locator('[data-testid^="sidenav-category-"]').first().scrollIntoViewIfNeeded();
-    const slug = (await firstNode.getAttribute("data-testid"))?.replace(
-      "sidenav-node-",
-      "",
-    );
-    expect(slug).toBeTruthy();
+    const firstNodeHref = await page
+      .locator('main a[href^="/node/"]')
+      .first()
+      .getAttribute("href");
+    expect(firstNodeHref).toBeTruthy();
+    const slug = firstNodeHref!.replace("/node/", "");
+
     await page.goto(`/node/${slug}`);
     // Contents is the active top-level nav item on node pages
     await expect(page.locator('a[href="/contents"]')).toHaveClass(/text-primary/);
-    // Subtree is visible and this node is the aria-current="page"
+    // Subtree is force-expanded and this node is aria-current="page"
     const current = page.getByTestId(`sidenav-node-${slug}`);
     await expect(current).toBeVisible();
     await expect(current).toHaveAttribute("aria-current", "page");
