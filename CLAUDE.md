@@ -82,6 +82,14 @@ docker compose down -v            # stop + destroy node_modules volume (needed a
 
 App served at http://localhost:3000.
 
+## Feedback loop
+
+- Logged-in users see a small `bug_report` trigger in the lower-right corner. Clicking it captures a screenshot of the current viewport (via `html2canvas`, downscaled to 1600px wide, JPEG q=0.85), opens a modal for a category + description, and `POST`s to `/api/feedback`.
+- The server route ([app/api/feedback/route.ts](app/api/feedback/route.ts)) files a GitHub issue on `GITHUB_REPO` using `GITHUB_TOKEN`. The screenshot is committed to the orphan branch `feedback-screenshots` (path: `screenshots/<YYYY-MM-DD>/<uuid>.jpg`) and referenced in the issue body as a raw-content URL.
+- Issues land with labels `user-feedback` + `feedback/<category>` and a title `[Feedback][<Category>] <summary>`. Agents should subscribe to the `user-feedback` label to triage.
+- Leave `GITHUB_TOKEN` empty to disable locally — the trigger still renders for logged-in users but the API responds with 503 and the modal surfaces an inline error.
+- See [`.env.example`](.env.example) for required env vars.
+
 ## Notes
 
 - Source edits hot-reload; no rebuild needed.
