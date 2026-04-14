@@ -1,37 +1,46 @@
 import Link from "next/link";
 import { AppShell, Button, SectionHeading } from "./components";
+import { db } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth-helpers";
+import { listCategoryCounts, getSiteStats } from "@/lib/vault/loaders";
+import { CATEGORY_META } from "@/lib/vault/categories";
+import type { Viewer } from "@/lib/vault/can-see";
 
-const MARGINALIA = [
-  {
-    letter: "P",
-    title: "Pelia Map",
-    note: "Geographic records of the Eastern Wastes.",
-  },
-  {
-    letter: "M",
-    title: "Monsters of Mire",
-    note: "A bestiary of swamp-dwelling horrors.",
-  },
-  {
-    letter: "L",
-    title: "Language of Stars",
-    note: "Deciphering the Celestial script.",
-  },
-  {
-    letter: "K",
-    title: "Kings of Oakhaven",
-    note: "Succession line of the Verdant Throne.",
-  },
-];
+export default async function Home() {
+  const user = await getSessionUser();
+  const viewer: Viewer = user ? { role: user.role } : null;
+  const [rawCategories, siteStats] = await Promise.all([
+    listCategoryCounts(db, viewer),
+    getSiteStats(db),
+  ]);
+  const categories = rawCategories
+    .slice()
+    .sort((a, b) =>
+      CATEGORY_META[a.type].letter.localeCompare(CATEGORY_META[b.type].letter),
+    );
+  const stats = [
+    {
+      icon: "history_edu",
+      value: siteStats.totalNodes,
+      label: "Manuscripts Filed",
+    },
+    {
+      icon: "public",
+      value: siteStats.mappedPlaces,
+      label: "Mapped Regions",
+    },
+    {
+      icon: "translate",
+      value: siteStats.lexiconTerms,
+      label: "Lexicon Entries",
+    },
+    {
+      icon: "history",
+      value: siteStats.eventsRecorded,
+      label: "Events Recorded",
+    },
+  ];
 
-const STATS = [
-  { icon: "history_edu", value: "12,482", label: "Manuscripts Filed" },
-  { icon: "public", value: "86", label: "Mapped Regions" },
-  { icon: "groups", value: "412", label: "Active Scribes" },
-  { icon: "hourglass_empty", value: "V", label: "Current Age" },
-];
-
-export default function Home() {
   return (
     <AppShell active="library">
       {/* Hero Section */}
@@ -159,44 +168,60 @@ export default function Home() {
               </div>
             </div>
           </div>
-          {/* Marginalia List */}
-          <div className="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-            {MARGINALIA.map(({ letter, title, note }) => (
-              <div
-                key={letter}
-                className="p-6 border-b border-primary/20 bg-stone-900/20 hover:bg-stone-800/40 transition-colors cursor-pointer group"
-              >
-                <span className="text-primary text-3xl font-bold mb-2 block group-hover:scale-110 transition-transform origin-left">
-                  {letter}
-                </span>
-                <h5 className="text-sm font-bold uppercase tracking-widest text-stone-300">
-                  {title}
-                </h5>
-                <p className="text-xs text-stone-500 mt-2">{note}</p>
-              </div>
-            ))}
-          </div>
+          {/* Category Index — deep-links into /contents */}
+          <nav
+            aria-label="Category index"
+            className="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8"
+          >
+            {categories.map(({ type }) => {
+              const meta = CATEGORY_META[type];
+              return (
+                <Link
+                  key={type}
+                  href={`/contents#${type}`}
+                  aria-label={`Browse ${meta.label}`}
+                  className="p-6 bg-surface-container-low hover:bg-surface-container-high focus-visible:bg-surface-container-high focus-ring transition-colors group rounded-sm"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="text-primary text-3xl font-bold mb-2 block group-hover:scale-110 transition-transform origin-left"
+                  >
+                    {meta.letter}
+                  </span>
+                  <h5 className="text-sm font-bold uppercase tracking-widest text-on-surface">
+                    {meta.label}
+                  </h5>
+                  <p className="text-xs text-on-surface-variant mt-2">
+                    {meta.blurb}
+                  </p>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       </section>
 
       {/* Statistics Footer Section */}
       <section className="bg-stone-950 border-t border-stone-800/50 pt-16">
         <div className="max-w-[1400px] mx-auto px-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
-            {STATS.map(({ icon, value, label }) => (
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+            {stats.map(({ icon, value, label }) => (
               <div key={label} className="flex flex-col items-center">
-                <span className="material-symbols-outlined text-primary mb-4 text-4xl">
+                <span
+                  aria-hidden="true"
+                  className="material-symbols-outlined text-primary mb-4 text-4xl"
+                >
                   {icon}
                 </span>
-                <div className="text-4xl font-black text-on-surface mb-2">
-                  {value}
-                </div>
-                <div className="text-[10px] uppercase tracking-[0.4em] text-stone-500 font-bold">
+                <dd className="text-4xl font-black text-on-surface mb-2">
+                  {value.toLocaleString("en-US")}
+                </dd>
+                <dt className="text-[10px] uppercase tracking-[0.4em] text-on-surface-variant font-bold">
                   {label}
-                </div>
+                </dt>
               </div>
             ))}
-          </div>
+          </dl>
         </div>
         <div className="relative mt-20 pt-12 pb-16 px-12 border-t border-stone-900 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="text-left">

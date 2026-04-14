@@ -11,14 +11,14 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 font-bold uppercase tracking-widest transition-all disabled:opacity-40 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 font-bold uppercase tracking-widest transition-all disabled:opacity-40 disabled:cursor-not-allowed focus-ring";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
     "bg-primary text-on-primary hover:brightness-110 shadow-lg shadow-primary/10 rounded-sm",
   secondary:
-    "border border-stone-700 text-stone-300 hover:bg-stone-800 rounded-sm",
-  ghost: "text-stone-400 hover:text-primary",
+    "border border-outline-variant text-on-surface hover:bg-surface-container-high rounded-sm",
+  ghost: "text-on-surface-variant hover:text-primary",
 };
 
 const SIZES: Record<Size, string> = {

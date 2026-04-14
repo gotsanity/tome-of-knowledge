@@ -35,6 +35,13 @@
 }
 
 @layer components {
+  /* Canonical focus ring for interactive surfaces — keyboard only.
+     Paired with any clickable/linked element so focus treatment stays
+     uniform across Button, Link cards, and future interactive widgets. */
+  .focus-ring {
+    @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
   /* Scrollbar hidden */
   .no-scrollbar::-webkit-scrollbar {
     display: none;

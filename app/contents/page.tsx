@@ -3,26 +3,9 @@ import { AppShell } from "../components";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-helpers";
 import { listNodesByType, type LoadedNode } from "@/lib/vault/loaders";
-import { NODE_TYPES, type NodeType } from "@/lib/db/schema";
+import { CATEGORY_META } from "@/lib/vault/categories";
+import { NODE_TYPES } from "@/lib/db/schema";
 import type { Viewer } from "@/lib/vault/can-see";
-
-const TYPE_LABEL: Record<NodeType, string> = {
-  npc: "Figures",
-  location: "Places",
-  faction: "Factions",
-  region: "Regions",
-  species: "Species",
-  religion: "Faiths",
-  system: "Systems",
-  lore: "Lore Fragments",
-  event: "Events",
-  plotline: "Plotlines",
-  campaign: "Campaigns",
-  "campaign-frame": "Campaign Frames",
-  handout: "Handouts",
-  bestiary: "Bestiary",
-  pc: "Player Characters",
-};
 
 const ROMAN_NUMERALS = [
   "I.",
@@ -76,7 +59,7 @@ export default async function TableOfContentsPage() {
   const sections = await Promise.all(
     NODE_TYPES.map(async (type) => ({
       type,
-      label: TYPE_LABEL[type],
+      label: CATEGORY_META[type].label,
       nodes: await listNodesByType(db, type, viewer),
     })),
   );
@@ -127,7 +110,7 @@ export default async function TableOfContentsPage() {
         ) : (
           <div className="space-y-12">
             {populated.map((section, idx) => (
-              <section key={section.type}>
+              <section key={section.type} id={section.type} className="scroll-mt-32">
                 <div className="flex items-center gap-4 mb-6">
                   <span className="text-primary text-4xl font-bold leading-none">
                     {ROMAN_NUMERALS[idx] ?? `${idx + 1}.`}

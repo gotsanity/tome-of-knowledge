@@ -1,6 +1,7 @@
-import { eq, inArray, asc } from "drizzle-orm";
+import { eq, inArray, asc, sql } from "drizzle-orm";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import * as schema from "@/lib/db/schema";
+import { NODE_TYPES } from "@/lib/db/schema";
 import type { NodeType, NodeVisibility } from "@/lib/db/schema";
 import { canSee, isGm, type Viewer } from "./can-see";
 
@@ -121,6 +122,60 @@ export async function listNodesByType(
   const filtered = rows.filter((r) => visible.includes(r.visibility));
   // Sections are optional for list views; hydrate without them.
   return filtered.map((r) => hydrateNode(r, []));
+}
+
+export async function getSiteStats(
+  db: LibSQLDatabase<typeof schema>,
+): Promise<{
+  totalNodes: number;
+  mappedPlaces: number;
+  lexiconTerms: number;
+  eventsRecorded: number;
+}> {
+  const countExpr = sql<number>`count(*)`;
+  const [totalRows, placesRows, lexiconRows, eventsRows] = await Promise.all([
+    db.select({ count: countExpr }).from(schema.nodes),
+    db
+      .select({ count: countExpr })
+      .from(schema.nodes)
+      .where(inArray(schema.nodes.type, ["region", "location"])),
+    db.select({ count: countExpr }).from(schema.lexiconTerms),
+    db
+      .select({ count: countExpr })
+      .from(schema.nodes)
+      .where(eq(schema.nodes.type, "event")),
+  ]);
+  return {
+    totalNodes: Number(totalRows[0]?.count ?? 0),
+    mappedPlaces: Number(placesRows[0]?.count ?? 0),
+    lexiconTerms: Number(lexiconRows[0]?.count ?? 0),
+    eventsRecorded: Number(eventsRows[0]?.count ?? 0),
+  };
+}
+
+export async function listCategoryCounts(
+  db: LibSQLDatabase<typeof schema>,
+  viewer: Viewer,
+): Promise<Array<{ type: NodeType; count: number }>> {
+  const visible: NodeVisibility[] = isGm(viewer)
+    ? ["published", "draft", "gm-only"]
+    : ["published"];
+  const rows = await db
+    .select({
+      type: schema.nodes.type,
+      count: sql<number>`count(*)`.as("count"),
+    })
+    .from(schema.nodes)
+    .where(inArray(schema.nodes.visibility, visible))
+    .groupBy(schema.nodes.type);
+  const byType = new Map<NodeType, number>();
+  for (const row of rows) {
+    byType.set(row.type, Number(row.count));
+  }
+  return NODE_TYPES.flatMap((type) => {
+    const count = byType.get(type) ?? 0;
+    return count > 0 ? [{ type, count }] : [];
+  });
 }
 
 export async function getRelated(

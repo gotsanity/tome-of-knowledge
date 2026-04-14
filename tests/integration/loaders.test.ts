@@ -10,6 +10,8 @@ import { importVault } from "@/lib/vault/importer";
 import {
   getNode,
   listNodesByType,
+  listCategoryCounts,
+  getSiteStats,
   getRelated,
   getLexiconTerm,
   listLexiconTerms,
@@ -108,6 +110,59 @@ describe("vault loaders", () => {
         "fort-commander-gm-notes",
         "hidden-revenant",
       ]);
+    });
+  });
+
+  describe("listCategoryCounts", () => {
+    it("returns only published counts for a regular user", async () => {
+      const counts = await listCategoryCounts(db, regularUser);
+      const byType = Object.fromEntries(counts.map((c) => [c.type, c.count]));
+      // fixture: 1 published faction, 2 published locations, 1 published npc
+      expect(byType).toEqual({
+        faction: 1,
+        location: 2,
+        npc: 1,
+      });
+    });
+
+    it("returns only published counts for an anonymous viewer", async () => {
+      const counts = await listCategoryCounts(db, anonymous);
+      const byType = Object.fromEntries(counts.map((c) => [c.type, c.count]));
+      expect(byType).toEqual({
+        faction: 1,
+        location: 2,
+        npc: 1,
+      });
+    });
+
+    it("returns full counts for a GM (includes draft + gm-only)", async () => {
+      const counts = await listCategoryCounts(db, gm);
+      const byType = Object.fromEntries(counts.map((c) => [c.type, c.count]));
+      // fixture: 1 faction, 2 locations, 3 npcs (1 published + 1 draft + 1 gm-only)
+      expect(byType).toEqual({
+        faction: 1,
+        location: 2,
+        npc: 3,
+      });
+    });
+
+    it("omits categories with zero visible nodes", async () => {
+      const counts = await listCategoryCounts(db, regularUser);
+      expect(counts.every((c) => c.count > 0)).toBe(true);
+    });
+  });
+
+  describe("getSiteStats", () => {
+    it("returns raw totals across the vault regardless of visibility", async () => {
+      const stats = await getSiteStats(db);
+      // fixture: 1 faction + 2 locations + 3 npcs (published + draft + gm-only)
+      expect(stats.totalNodes).toBe(6);
+      // fixture has 2 locations and 0 regions
+      expect(stats.mappedPlaces).toBe(2);
+      // matches existing listLexiconTerms assertion
+      expect(stats.lexiconTerms).toBe(5);
+      // fixture has no event nodes
+      expect(stats.eventsRecorded).toBe(0);
     });
   });
 
