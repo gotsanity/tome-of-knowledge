@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Illuminated drop-cap color. Shared by .drop-cap, .drop-cap-sm, and
+     .prose-manuscript-dropcap so all three illuminated-capital treatments
+     can be re-themed from a single declaration. */
+  --drop-cap-color: #d97706;
+  --drop-cap-sm-color: #9c7616;
+}
+
 @layer base {
   html {
     color-scheme: dark;
@@ -86,7 +94,7 @@
     line-height: 1;
     font-weight: 800;
     padding-right: 0.5rem;
-    color: #d97706; /* amber-600 */
+    color: var(--drop-cap-color);
     font-family: var(--font-newsreader), Newsreader, serif;
   }
   .drop-cap-sm::first-letter {
@@ -95,7 +103,7 @@
     line-height: 1;
     font-weight: 700;
     padding-right: 8px;
-    color: #9c7616;
+    color: var(--drop-cap-sm-color);
     font-family: var(--font-newsreader), Newsreader, serif;
   }
 
@@ -148,6 +156,17 @@
     color: #d4af37;
     text-decoration: underline;
     text-underline-offset: 2px;
+  }
+  /* Drop-cap on the first paragraph of a node body. Applied via a toggled
+     class so only the first section of a sectioned node lights up. */
+  .prose-manuscript-dropcap p:first-of-type::first-letter {
+    float: left;
+    font-size: 4.5rem;
+    line-height: 1;
+    font-weight: 800;
+    padding-right: 0.5rem;
+    color: var(--drop-cap-color);
+    font-family: var(--font-newsreader), Newsreader, serif;
   }
 }
 

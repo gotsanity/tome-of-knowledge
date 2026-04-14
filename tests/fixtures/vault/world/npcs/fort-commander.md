@@ -15,6 +15,10 @@ related:
 species: human
 faction_affiliation: order-of-mending
 public_role: garrison commander
+influence: Controls garrison duty rosters and mercy-day pardons at Fort Ashby.
+motivation: Keep the old oaths alive even as the Order loses its grip.
+private_goal: Broker a secret truce with the Silent Isles cartel.
+weak_point: A debt owed to a smuggler captain who knows the truce.
 ---
 
 ## Overview

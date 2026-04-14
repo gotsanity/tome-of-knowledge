@@ -22,6 +22,10 @@ function makeNode(overrides: Partial<LoadedNode>): LoadedNode {
   };
 }
 
+/**
+ * parseFacetLink remains a shared helper used by Marginalia for link-typed
+ * frontmatter fields. Its behavior has not changed.
+ */
 describe("parseFacetLink", () => {
   const slugs = new Set(["order-of-mending", "fort-ashby"]);
 
@@ -59,8 +63,57 @@ describe("parseFacetLink", () => {
   });
 });
 
+/**
+ * After issue #14, NodeHeader only renders the eyebrow (type label) and
+ * the H1 title. Frontmatter facets moved to the Marginalia sidebar card.
+ */
 describe("NodeHeader", () => {
-  it("renders an NPC with species and faction affiliation", () => {
+  it("renders the eyebrow and title for an NPC", () => {
+    render(
+      <NodeHeader node={makeNode({ type: "npc", name: "Fort Commander" })} />,
+    );
+    expect(
+      screen.getByRole("heading", { level: 1, name: /Fort Commander/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^Figure$/)).toBeInTheDocument();
+  });
+
+  it("renders the expected eyebrow label for each of several node types", () => {
+    const { rerender } = render(
+      <NodeHeader node={makeNode({ type: "location", name: "Fort Ashby" })} />,
+    );
+    expect(screen.getByText("Place")).toBeInTheDocument();
+
+    rerender(
+      <NodeHeader
+        node={makeNode({ type: "faction", name: "Order of Mending" })}
+      />,
+    );
+    expect(screen.getByText("Faction")).toBeInTheDocument();
+
+    rerender(<NodeHeader node={makeNode({ type: "event", name: "Fall" })} />);
+    expect(screen.getByText("Event")).toBeInTheDocument();
+  });
+
+  it("humanizes a kebab-case name for display", () => {
+    render(
+      <NodeHeader node={makeNode({ type: "npc", name: "fort-commander" })} />,
+    );
+    expect(
+      screen.getByRole("heading", { level: 1, name: /Fort Commander/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves an already-humanized name alone", () => {
+    render(
+      <NodeHeader node={makeNode({ type: "npc", name: "Fort Commander" })} />,
+    );
+    expect(
+      screen.getByRole("heading", { level: 1, name: /Fort Commander/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not render frontmatter facets — those belong to Marginalia now", () => {
     render(
       <NodeHeader
         node={makeNode({
@@ -74,190 +127,14 @@ describe("NodeHeader", () => {
         })}
       />,
     );
-    expect(
-      screen.getByRole("heading", { name: /Fort Commander/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/human/i)).toBeInTheDocument();
-    expect(screen.getByText(/order-of-mending/i)).toBeInTheDocument();
-  });
-
-  it("renders a location with function and influence", () => {
-    render(
-      <NodeHeader
-        node={makeNode({
-          type: "location",
-          name: "Fort Ashby",
-          frontmatter: { function: "garrison", influence: "regional" },
-        })}
-      />,
-    );
-    expect(
-      screen.getByRole("heading", { name: /Fort Ashby/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/garrison/i)).toBeInTheDocument();
-    expect(screen.getByText(/regional/i)).toBeInTheDocument();
-  });
-
-  it("renders a faction with goal", () => {
-    render(
-      <NodeHeader
-        node={makeNode({
-          type: "faction",
-          name: "Order of Mending",
-          frontmatter: { goal: "preserve the old oaths" },
-        })}
-      />,
-    );
-    expect(
-      screen.getByRole("heading", { name: /Order of Mending/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/preserve the old oaths/i)).toBeInTheDocument();
-  });
-
-  it("humanizes a kebab-case name for display", () => {
-    render(
-      <NodeHeader
-        node={makeNode({
-          type: "npc",
-          name: "fort-commander",
-        })}
-      />,
-    );
-    expect(
-      screen.getByRole("heading", { name: /Fort Commander/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("leaves an already-humanized name alone", () => {
-    render(<NodeHeader node={makeNode({ type: "npc", name: "Fort Commander" })} />);
-    expect(
-      screen.getByRole("heading", { name: /Fort Commander/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("does not crash when type-specific fields are missing", () => {
-    render(<NodeHeader node={makeNode({ type: "lore", name: "The Compact" })} />);
-    expect(
-      screen.getByRole("heading", { name: /The Compact/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("renders a wikilink affiliation as a link to the affiliated node", () => {
-    render(
-      <NodeHeader
-        node={makeNode({
-          type: "npc",
-          name: "Fort Commander",
-          frontmatter: {
-            faction_affiliation: "[[order-of-mending]]",
-          },
-        })}
-        nodeSlugs={new Set(["order-of-mending"])}
-      />,
-    );
-    const link = screen.getByRole("link", { name: /order-of-mending/i });
-    expect(link).toHaveAttribute("href", "/node/order-of-mending");
-    // raw brackets must never leak into the rendered output
-    expect(screen.queryByText(/\[\[/)).toBeNull();
-  });
-
-  it("uses the pipe label when the wikilink is aliased", () => {
-    render(
-      <NodeHeader
-        node={makeNode({
-          type: "npc",
-          name: "Test",
-          frontmatter: {
-            faction_affiliation: "[[order-of-mending|The Menders]]",
-          },
-        })}
-        nodeSlugs={new Set(["order-of-mending"])}
-      />,
-    );
-    expect(
-      screen.getByRole("link", { name: /the menders/i }),
-    ).toHaveAttribute("href", "/node/order-of-mending");
-  });
-
-  it("links bare-slug affiliations that resolve to a known node", () => {
-    render(
-      <NodeHeader
-        node={makeNode({
-          type: "npc",
-          name: "Test",
-          frontmatter: { faction_affiliation: "order-of-mending" },
-        })}
-        nodeSlugs={new Set(["order-of-mending"])}
-      />,
-    );
-    expect(
-      screen.getByRole("link", { name: /order-of-mending/i }),
-    ).toHaveAttribute("href", "/node/order-of-mending");
-  });
-
-  it("strips wikilink brackets even when the slug is not resolvable", () => {
-    render(
-      <NodeHeader
-        node={makeNode({
-          type: "npc",
-          name: "Test",
-          frontmatter: {
-            faction_affiliation: "[[greystone-coalition]]",
-          },
-        })}
-        nodeSlugs={new Set()}
-      />,
-    );
-    expect(screen.queryByRole("link")).toBeNull();
-    expect(screen.getByText(/greystone-coalition/)).toBeInTheDocument();
-    expect(screen.queryByText(/\[\[/)).toBeNull();
-  });
-
-  it("leaves freeform prose as plain text", () => {
-    render(
-      <NodeHeader
-        node={makeNode({
-          type: "npc",
-          name: "Zhar",
-          frontmatter: {
-            faction_affiliation:
-              "None current; Tareth primal-elf tribe by origin",
-          },
-        })}
-        nodeSlugs={new Set()}
-      />,
-    );
-    expect(
-      screen.getByText(/None current; Tareth primal-elf tribe by origin/),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("link")).toBeNull();
-  });
-
-  it("also linkifies non-affiliation facets like species when given a wikilink", () => {
-    render(
-      <NodeHeader
-        node={makeNode({
-          type: "npc",
-          name: "Test",
-          frontmatter: { species: "[[fort-ashby|Fort Ashby]]" },
-        })}
-        nodeSlugs={new Set(["fort-ashby"])}
-      />,
-    );
-    expect(
-      screen.getByRole("link", { name: /fort ashby/i }),
-    ).toHaveAttribute("href", "/node/fort-ashby");
+    expect(screen.queryByText(/human/i)).toBeNull();
+    expect(screen.queryByText(/order-of-mending/i)).toBeNull();
+    expect(screen.queryByText(/garrison commander/i)).toBeNull();
   });
 
   it("is accessible (axe)", async () => {
     const { container } = render(
-      <NodeHeader
-        node={makeNode({
-          type: "npc",
-          name: "Fort Commander",
-          frontmatter: { species: "human" },
-        })}
-      />,
+      <NodeHeader node={makeNode({ type: "npc", name: "Fort Commander" })} />,
     );
     expect(await axe(container)).toHaveNoViolations();
   });

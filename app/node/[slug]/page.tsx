@@ -1,8 +1,14 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { AppShell } from "@/app/components";
 import { NodeHeader } from "@/app/components/NodeHeader";
 import { NodeBody } from "@/app/components/NodeBody";
+import { Marginalia } from "@/app/components/Marginalia";
+import { BlockStack } from "@/app/components/NodeBlock";
+import {
+  LinkedRecords,
+  computeLinkedRecords,
+} from "@/app/components/LinkedRecords";
+import { NodeTagline, resolveTagline } from "@/app/components/NodeTagline";
 import { db, schema } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-helpers";
 import {
@@ -21,6 +27,7 @@ export default async function NodePage({
   const { slug } = await params;
   const user = await getSessionUser();
   const viewer: Viewer = user ? { role: user.role } : null;
+  const viewerIsGm = user?.role === "gm";
 
   const node = await getNode(db, slug, viewer);
   if (!node) {
@@ -31,7 +38,12 @@ export default async function NodePage({
   const companion = await getCompanion(db, slug, viewer);
 
   const [allNodes, allLexiconTerms] = await Promise.all([
-    db.select({ slug: schema.nodes.slug }).from(schema.nodes),
+    db
+      .select({
+        slug: schema.nodes.slug,
+        name: schema.nodes.name,
+      })
+      .from(schema.nodes),
     listLexiconTerms(db),
   ]);
   const wikilinks = {
@@ -46,13 +58,29 @@ export default async function NodePage({
       tooltipEnabled: t.tooltipEnabled,
     })),
   };
+  const nodeMetaBySlug = new Map(
+    allNodes.map((r) => [r.slug, { slug: r.slug, name: r.name }]),
+  );
+
+  const tagline = resolveTagline(node, allLexiconTerms);
+  const linkedRecords = computeLinkedRecords(
+    node,
+    related,
+    nodeMetaBySlug,
+    viewerIsGm,
+  );
 
   return (
     <AppShell active="contents" currentNodeSlug={slug}>
       <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-12 parchment-texture">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8">
-            <NodeHeader node={node} nodeSlugs={wikilinks.nodeSlugs} />
+            <NodeHeader node={node} />
+            {tagline && (
+              <div className="border-b border-primary/10 pb-8 mb-12">
+                <NodeTagline text={tagline} />
+              </div>
+            )}
             <NodeBody
               sections={node.sections}
               bodyMd={node.bodyMd}
@@ -94,31 +122,15 @@ export default async function NodePage({
             )}
           </div>
           <aside className="lg:col-span-4">
-            {related.length > 0 && (
-              <div className="sticky top-24">
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.3em] text-primary mb-4">
-                  Related
-                </h2>
-                <ul className="space-y-3">
-                  {related.map((edge) => (
-                    <li
-                      key={`${edge.direction}-${edge.slug}-${edge.relType}`}
-                      className="flex items-baseline justify-between gap-4 border-b border-outline-variant/40 pb-2"
-                    >
-                      <Link
-                        href={`/node/${edge.slug}`}
-                        className="text-on-surface hover:text-primary transition-colors"
-                      >
-                        {edge.name}
-                      </Link>
-                      <span className="text-[10px] uppercase tracking-widest text-outline">
-                        {edge.relType.replace(/_/g, " ").toLowerCase()}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <div className="sticky top-24 space-y-8">
+              <Marginalia
+                node={node}
+                viewerIsGm={viewerIsGm}
+                nodeSlugs={wikilinks.nodeSlugs}
+              />
+              <BlockStack node={node} viewerIsGm={viewerIsGm} />
+              <LinkedRecords entries={linkedRecords} />
+            </div>
           </aside>
         </div>
       </div>

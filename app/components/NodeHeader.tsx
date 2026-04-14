@@ -1,12 +1,4 @@
-import Link from "next/link";
 import type { LoadedNode } from "@/lib/vault/loaders";
-
-type Props = {
-  node: LoadedNode;
-  nodeSlugs?: Set<string>;
-};
-
-type FacetLink = { label: string; href: string };
 
 /**
  * Parse a frontmatter facet value into a displayable label and, when possible,
@@ -16,9 +8,8 @@ type FacetLink = { label: string; href: string };
  *   - freeform prose (rendered as plain text)
  *
  * A link is produced only when the resolved slug exists in `nodeSlugs`, so
- * hidden/unseen targets don't turn into dead links. This runs on every
- * frontmatter-backed facet (species, affiliation, role, function, influence,
- * goal, etc.) so no vault-imported value ever renders as literal `[[...]]`.
+ * hidden/unseen targets don't turn into dead links. Used by the Marginalia
+ * sidebar card for link-typed frontmatter fields.
  */
 export function parseFacetLink(
   raw: string,
@@ -68,100 +59,21 @@ const TYPE_LABEL: Record<LoadedNode["type"], string> = {
   pc: "Player Character",
 };
 
-function Facet({
-  label,
-  value,
-  link,
-}: {
-  label: string;
-  value: string;
-  link?: FacetLink;
-}) {
+/**
+ * Node-page header: eyebrow (type label) + H1. Frontmatter facets moved to
+ * the Marginalia sidebar card in issue #14 — this component is now only
+ * responsible for the title treatment. The tagline row renders separately
+ * via NodeTagline so the header stays layout-agnostic.
+ */
+export function NodeHeader({ node }: { node: LoadedNode }) {
   return (
-    <div className="flex flex-col">
-      <span className="text-[10px] uppercase tracking-[0.2em] text-outline">
-        {label}
-      </span>
-      {link ? (
-        <Link
-          href={link.href}
-          className="text-sm text-primary hover:underline decoration-1 underline-offset-4"
-        >
-          {link.label}
-        </Link>
-      ) : (
-        <span className="text-sm text-on-surface-variant">{value}</span>
-      )}
-    </div>
-  );
-}
-
-type FacetEntry = { label: string; value: string; link?: FacetLink };
-
-function typeFacets(
-  node: LoadedNode,
-  nodeSlugs?: Set<string>,
-): Array<FacetEntry> {
-  const fm = node.frontmatter;
-  const facet = (label: string, key: string): FacetEntry | null => {
-    const v = fm[key];
-    if (typeof v !== "string" || v.length === 0) return null;
-    const parsed = parseFacetLink(v, nodeSlugs);
-    return {
-      label,
-      value: parsed.label,
-      link: parsed.href
-        ? { label: parsed.label, href: parsed.href }
-        : undefined,
-    };
-  };
-  const collect = (
-    ...entries: Array<[label: string, key: string]>
-  ): FacetEntry[] => entries.flatMap(([l, k]) => (facet(l, k) ? [facet(l, k)!] : []));
-
-  switch (node.type) {
-    case "npc":
-    case "pc":
-      return collect(
-        ["Species", "species"],
-        ["Affiliation", "faction_affiliation"],
-        ["Role", "public_role"],
-      );
-    case "location":
-      return collect(["Function", "function"], ["Influence", "influence"]);
-    case "faction":
-      return collect(["Goal", "goal"], ["Influence", "influence"]);
-    case "region":
-      return collect(["Influence", "influence"]);
-    default:
-      return [];
-  }
-}
-
-export function NodeHeader({ node, nodeSlugs }: Props) {
-  const facets = typeFacets(node, nodeSlugs);
-  const typeLabel = TYPE_LABEL[node.type];
-
-  return (
-    <header className="mb-12">
+    <header className="mb-6">
       <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-primary mb-4 block">
-        {typeLabel}
+        {TYPE_LABEL[node.type]}
       </span>
       <h1 className="text-5xl lg:text-6xl font-black text-on-surface tracking-tighter leading-tight mb-6">
         {displayName(node)}
       </h1>
-      {facets.length > 0 && (
-        <div className="flex flex-wrap gap-8 border-b border-outline-variant/40 pb-6 mb-2">
-          {facets.map((facet) => (
-            <Facet
-              key={facet.label}
-              label={facet.label}
-              value={facet.value}
-              link={facet.link}
-            />
-          ))}
-        </div>
-      )}
     </header>
   );
 }
