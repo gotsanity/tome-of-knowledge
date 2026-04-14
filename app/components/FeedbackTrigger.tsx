@@ -67,7 +67,7 @@ export function FeedbackTrigger() {
 
   return (
     <>
-      <div className="fixed bottom-0 right-0 w-32 h-32 z-[60] overflow-hidden group">
+      <div className="fixed bottom-0 right-0 w-32 h-32 z-[60] overflow-hidden group pointer-events-none">
         <svg
           className="absolute inset-0 w-full h-full text-primary fill-current translate-x-12 translate-y-12 opacity-20 group-hover:opacity-50 transition-opacity pointer-events-none"
           viewBox="0 0 100 100"
@@ -82,7 +82,7 @@ export function FeedbackTrigger() {
           disabled={capturing}
           aria-label="Report an issue"
           title="Report an issue"
-          className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant text-primary flex items-center justify-center shadow-lg shadow-background/60 hover:bg-surface-container-highest hover:scale-105 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 disabled:opacity-50 disabled:cursor-wait"
+          className="pointer-events-auto absolute bottom-2 right-2 w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant text-primary flex items-center justify-center shadow-lg shadow-background/60 hover:bg-surface-container-highest hover:scale-105 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 disabled:opacity-50 disabled:cursor-wait"
         >
           <span className="material-symbols-outlined text-base leading-none">
             {capturing ? "hourglass_empty" : "bug_report"}
