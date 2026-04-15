@@ -1,9 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LoadedNode } from "@/lib/vault/loaders";
 import type { NodeType } from "@/lib/db/schema";
+import {
+  SECTION_HASH_EVENT,
+  readSectionFromHash,
+  setSectionHash,
+  type SectionHashDetail,
+} from "./section-hash";
+
+// Matches `duration-[1400ms]` on the grid-rows transition below. We anchor
+// the clicked section's header to the viewport top for slightly longer
+// than the animation runs so the rAF loop covers the full reflow window.
+const ANIMATION_DURATION_MS = 1400;
+const ANCHOR_BUFFER_MS = 80;
 
 const ROMAN_NUMERALS = [
   "I.",
@@ -45,13 +57,96 @@ export function ContentsAccordion({
 }: {
   sections: AccordionSection[];
 }) {
-  const [openType, setOpenType] = useState<NodeType | null>(
-    sections[0]?.type ?? null,
+  const knownTypes = useMemo(() => sections.map((s) => s.type), [sections]);
+  const [openType, setOpenType] = useState<NodeType | null>(() => {
+    // SSR + first client render must agree, so we don't read window here.
+    // The hash-sync effect below reconciles to the URL hash on mount.
+    return sections[0]?.type ?? null;
+  });
+  const sectionRefs = useRef(new Map<NodeType, HTMLElement | null>());
+
+  // Anchor the clicked section's header to the top of the viewport for
+  // the duration of the open/close animation. Without this, the section
+  // *above* the click point collapses, the document reflows shorter, and
+  // the section the user just clicked drifts up off-screen.
+  //
+  // We can't compute a single target scrollTop up-front because the grid
+  // transition continuously interpolates heights — `getBoundingClientRect`
+  // returns mid-animation values. Instead, re-pin every animation frame
+  // until the transition ends. `scroll-mt-32` on the section element gives
+  // scrollIntoView a 128px top offset to clear the sticky TopAppBar.
+  const anchorSectionToTop = useCallback((type: NodeType) => {
+    if (typeof window === "undefined") return;
+    let start: number | null = null;
+    const tick = (now: number) => {
+      if (start === null) start = now;
+      const el = sectionRefs.current.get(type);
+      if (!el) return;
+      el.scrollIntoView({ block: "start", behavior: "auto" });
+      if (now - start < ANIMATION_DURATION_MS + ANCHOR_BUFFER_MS) {
+        requestAnimationFrame(tick);
+      }
+    };
+    requestAnimationFrame(tick);
+  }, []);
+
+  const openSection = useCallback(
+    (type: NodeType, options: { updateHash: boolean; scroll: boolean }) => {
+      setOpenType(type);
+      if (options.updateHash) {
+        setSectionHash(type);
+      }
+      if (options.scroll) {
+        anchorSectionToTop(type);
+      }
+    },
+    [anchorSectionToTop],
   );
 
-  const handleHeaderClick = useCallback((type: NodeType) => {
-    setOpenType(type);
+  // On mount, reconcile to whatever section the URL hash points at.
+  useEffect(() => {
+    const initial = readSectionFromHash();
+    if (initial && knownTypes.includes(initial as NodeType)) {
+      openSection(initial as NodeType, { updateHash: false, scroll: true });
+    }
+    // We only want this to run once on mount — the hash listener below
+    // handles subsequent changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // React to hash changes from the sidebar, back/forward, or URL edits.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const known = new Set(knownTypes);
+    const handleCustom = (e: Event) => {
+      const detail = (e as CustomEvent<SectionHashDetail>).detail;
+      if (!detail) return;
+      if (!known.has(detail.type as NodeType)) return;
+      const next = detail.type as NodeType;
+      setOpenType(next);
+      anchorSectionToTop(next);
+    };
+    const handleNative = () => {
+      const next = readSectionFromHash();
+      if (next && known.has(next as NodeType)) {
+        setOpenType(next as NodeType);
+        anchorSectionToTop(next as NodeType);
+      }
+    };
+    window.addEventListener(SECTION_HASH_EVENT, handleCustom);
+    window.addEventListener("hashchange", handleNative);
+    return () => {
+      window.removeEventListener(SECTION_HASH_EVENT, handleCustom);
+      window.removeEventListener("hashchange", handleNative);
+    };
+  }, [knownTypes, anchorSectionToTop]);
+
+  const handleHeaderClick = useCallback(
+    (type: NodeType) => {
+      openSection(type, { updateHash: true, scroll: true });
+    },
+    [openSection],
+  );
 
   return (
     <div className="space-y-4">
@@ -63,6 +158,9 @@ export function ContentsAccordion({
           <section
             key={section.type}
             id={section.type}
+            ref={(el) => {
+              sectionRefs.current.set(section.type, el);
+            }}
             data-contents-section={section.type}
             className="scroll-mt-32 border-b border-outline-variant/30"
           >

@@ -7,11 +7,18 @@ import {
   useState,
   useSyncExternalStore,
   useTransition,
+  type MouseEvent as ReactMouseEvent,
 } from "react";
 import { usePathname } from "next/navigation";
 import type { NodeType } from "@/lib/db/schema";
 import type { SidebarSection } from "@/lib/nav/sidebar-data";
 import { setNavItemExpandedAction } from "@/lib/nav/actions";
+import {
+  SECTION_HASH_EVENT,
+  readSectionFromHash,
+  setSectionHash,
+  type SectionHashDetail,
+} from "@/app/contents/section-hash";
 
 const STORAGE_KEY = "tome:nav:contents-expanded";
 
@@ -79,56 +86,56 @@ export function SideNavSubTree({
   const [, startTransition] = useTransition();
   const pathname = usePathname();
 
-  // Scroll-spy: observe section[id] elements matching known NodeType values
-  // on the current page. On pages without such sections the observer is a
-  // no-op and activeCategory stays null.
+  // Reflect the URL hash (and the in-page custom event) into the highlight.
+  // This replaces the previous IntersectionObserver scroll-spy: the accordion
+  // is the source of truth for which section is "active", and it broadcasts
+  // through the hash whenever the user opens a section.
   useEffect(() => {
-    if (!expanded) return;
     if (typeof window === "undefined") return;
+    const known = new Set(sections.map((s) => s.type));
 
-    const knownIds = new Set(sections.map((s) => s.type));
-    const targets = Array.from(
-      document.querySelectorAll<HTMLElement>("section[id]"),
-    ).filter((el) => knownIds.has(el.id as NodeType));
+    const updateFromHash = () => {
+      const next = readSectionFromHash();
+      if (next && known.has(next as NodeType)) {
+        setActiveCategory(next as NodeType);
+      } else if (pathname === "/contents") {
+        // No hash on /contents → the accordion defaults to its first
+        // section, so mirror that as the active highlight.
+        setActiveCategory((sections[0]?.type as NodeType) ?? null);
+      } else {
+        setActiveCategory(null);
+      }
+    };
+    const handleCustom = (e: Event) => {
+      const detail = (e as CustomEvent<SectionHashDetail>).detail;
+      if (detail && known.has(detail.type as NodeType)) {
+        setActiveCategory(detail.type as NodeType);
+      }
+    };
+    updateFromHash();
+    window.addEventListener("hashchange", updateFromHash);
+    window.addEventListener(SECTION_HASH_EVENT, handleCustom);
+    return () => {
+      window.removeEventListener("hashchange", updateFromHash);
+      window.removeEventListener(SECTION_HASH_EVENT, handleCustom);
+    };
+  }, [pathname, sections]);
 
-    if (targets.length === 0) return;
-
-    // Track visible pixel area (not intersectionRatio) per target. Ratio
-    // favors tiny elements — a collapsed accordion header fully on screen
-    // scores 1.0 and beats the expanded section the user is reading, which
-    // may only be half-visible. Pixel area reflects what actually dominates
-    // the viewport.
-    const visibleArea = new Map<string, number>();
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const rect = entry.intersectionRect;
-            visibleArea.set(entry.target.id, rect.width * rect.height);
-          } else {
-            visibleArea.delete(entry.target.id);
-          }
-        }
-        if (visibleArea.size === 0) {
-          setActiveCategory(null);
-          return;
-        }
-        // Pick the largest visible area; ties fall back to document order.
-        let best: { id: string; area: number } | null = null;
-        for (const target of targets) {
-          const area = visibleArea.get(target.id);
-          if (area === undefined || area <= 0) continue;
-          if (!best || area > best.area) {
-            best = { id: target.id, area };
-          }
-        }
-        setActiveCategory((best?.id ?? null) as NodeType | null);
-      },
-      { threshold: [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1] },
-    );
-    for (const target of targets) observer.observe(target);
-    return () => observer.disconnect();
-  }, [expanded, sections, pathname]);
+  // When the user clicks a sidebar category while already on /contents, we
+  // intercept the navigation so we go through the shared `setSectionHash`
+  // helper. That guarantees the accordion's custom-event listener fires
+  // (history.replaceState, which the helper uses, never emits hashchange).
+  // Off-page (e.g. /node/...), let the Link navigate normally — the
+  // accordion will read the URL hash on mount.
+  const handleCategoryClick = useCallback(
+    (type: NodeType) => (e: ReactMouseEvent<HTMLAnchorElement>) => {
+      if (pathname === "/contents") {
+        e.preventDefault();
+        setSectionHash(type);
+      }
+    },
+    [pathname],
+  );
 
   const toggleExpanded = useCallback(() => {
     const next = !expanded;
@@ -178,6 +185,7 @@ export function SideNavSubTree({
               <li key={section.type}>
                 <Link
                   href={`/contents#${section.type}`}
+                  onClick={handleCategoryClick(section.type)}
                   className={
                     "flex items-center justify-between gap-2 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60 " +
                     (isActive
