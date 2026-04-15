@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SidebarSection } from "@/lib/nav/sidebar-data";
+
+type IOCallback = (entries: IntersectionObserverEntry[]) => void;
+const ioInstances: Array<{ cb: IOCallback; targets: Element[] }> = [];
 
 const setNavItemExpandedAction = vi.fn();
 
@@ -55,12 +58,22 @@ beforeEach(() => {
   setNavItemExpandedAction.mockResolvedValue(undefined);
   mockPathname = "/contents";
   window.localStorage.clear();
-  // Stub IntersectionObserver — jsdom/happy-dom don't implement it
+  // Stub IntersectionObserver — jsdom/happy-dom don't implement it.
+  // The mock captures each instance so tests can drive the callback.
+  ioInstances.length = 0;
   class MockIO implements IntersectionObserver {
     readonly root = null;
     readonly rootMargin = "";
     readonly thresholds = [];
-    observe(): void {}
+    private readonly cb: IOCallback;
+    private readonly targets: Element[] = [];
+    constructor(cb: IOCallback) {
+      this.cb = cb;
+      ioInstances.push({ cb, targets: this.targets });
+    }
+    observe(el: Element): void {
+      this.targets.push(el);
+    }
     unobserve(): void {}
     disconnect(): void {}
     takeRecords(): IntersectionObserverEntry[] {
@@ -70,6 +83,34 @@ beforeEach(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).IntersectionObserver = MockIO;
 });
+
+function makeEntry(
+  target: Element,
+  width: number,
+  height: number,
+  ratio: number,
+): IntersectionObserverEntry {
+  const rect = {
+    x: 0,
+    y: 0,
+    width,
+    height,
+    top: 0,
+    right: width,
+    bottom: height,
+    left: 0,
+    toJSON: () => ({}),
+  } as DOMRectReadOnly;
+  return {
+    target,
+    isIntersecting: true,
+    intersectionRatio: ratio,
+    intersectionRect: rect,
+    boundingClientRect: rect,
+    rootBounds: null,
+    time: 0,
+  };
+}
 
 describe("SideNavSubTree", () => {
   it("renders nothing when there are no sections", () => {
@@ -186,6 +227,52 @@ describe("SideNavSubTree", () => {
       "aria-current",
       "true",
     );
+  });
+
+  it("scrollspy ranks sections by visible area, not intersection ratio", () => {
+    // Regression: a collapsed accordion header (~60px tall, fully on-screen)
+    // has intersectionRatio 1.0, while the open section the user is reading
+    // (~600px tall, half in view) has ratio ~0.5. Ranking by ratio highlights
+    // the wrong section. Ranking by visible pixel area (width * height of
+    // intersectionRect) picks the section that actually occupies the viewport.
+    const figures = document.createElement("section");
+    figures.id = "npc";
+    const places = document.createElement("section");
+    places.id = "location";
+    document.body.append(figures, places);
+
+    try {
+      render(
+        <SideNavSubTree
+          sections={SECTIONS}
+          initialContentsExpanded={true}
+          isAuthenticated={false}
+        />,
+      );
+
+      const io = ioInstances[0];
+      expect(io).toBeDefined();
+
+      // Figures: collapsed header, fully on-screen (ratio 1, area 800*60).
+      // Places: expanded body, half-visible (ratio 0.5, area 800*300).
+      act(() => {
+        io.cb([
+          makeEntry(figures, 800, 60, 1),
+          makeEntry(places, 800, 300, 0.5),
+        ]);
+      });
+
+      expect(screen.getByTestId("sidenav-category-location")).toHaveAttribute(
+        "aria-current",
+        "true",
+      );
+      expect(
+        screen.getByTestId("sidenav-category-npc"),
+      ).not.toHaveAttribute("aria-current", "true");
+    } finally {
+      figures.remove();
+      places.remove();
+    }
   });
 
   it("reconciles anonymous initial state with localStorage on mount", () => {

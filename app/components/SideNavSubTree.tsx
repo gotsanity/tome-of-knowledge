@@ -93,34 +93,38 @@ export function SideNavSubTree({
 
     if (targets.length === 0) return;
 
-    const visible = new Map<string, number>();
+    // Track visible pixel area (not intersectionRatio) per target. Ratio
+    // favors tiny elements — a collapsed accordion header fully on screen
+    // scores 1.0 and beats the expanded section the user is reading, which
+    // may only be half-visible. Pixel area reflects what actually dominates
+    // the viewport.
+    const visibleArea = new Map<string, number>();
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            visible.set(entry.target.id, entry.intersectionRatio);
+            const rect = entry.intersectionRect;
+            visibleArea.set(entry.target.id, rect.width * rect.height);
           } else {
-            visible.delete(entry.target.id);
+            visibleArea.delete(entry.target.id);
           }
         }
-        if (visible.size === 0) {
+        if (visibleArea.size === 0) {
           setActiveCategory(null);
           return;
         }
-        // Pick the target with the highest visible ratio; fall back to
-        // document order on ties (which happens often with the accordion
-        // layout where most sections collapse to a thin header row).
-        let best: { id: string; ratio: number } | null = null;
+        // Pick the largest visible area; ties fall back to document order.
+        let best: { id: string; area: number } | null = null;
         for (const target of targets) {
-          const ratio = visible.get(target.id);
-          if (ratio === undefined) continue;
-          if (!best || ratio > best.ratio) {
-            best = { id: target.id, ratio };
+          const area = visibleArea.get(target.id);
+          if (area === undefined || area <= 0) continue;
+          if (!best || area > best.area) {
+            best = { id: target.id, area };
           }
         }
         setActiveCategory((best?.id ?? null) as NodeType | null);
       },
-      { threshold: [0, 0.25, 0.5, 0.75, 1] },
+      { threshold: [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1] },
     );
     for (const target of targets) observer.observe(target);
     return () => observer.disconnect();
