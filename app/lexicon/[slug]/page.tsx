@@ -25,7 +25,7 @@ export default async function LexiconTermPage({
     .filter((t): t is NonNullable<typeof t> => t !== undefined);
 
   return (
-    <AppShell active="library">
+    <AppShell active="lexicon">
       <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-12 parchment-texture">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8">

@@ -6,7 +6,12 @@ import { getNavPreferences } from "@/lib/nav/preferences";
 import type { Viewer } from "@/lib/vault/can-see";
 import { SideNavSubTree } from "./SideNavSubTree";
 
-export type NavKey = "library" | "contents" | "scribe" | "archived";
+export type NavKey =
+  | "library"
+  | "contents"
+  | "lexicon"
+  | "scribe"
+  | "archived";
 
 type NavItem = {
   key: NavKey;
@@ -23,6 +28,7 @@ const ITEMS: NavItem[] = [
     icon: "format_list_bulleted",
     label: "Table of Contents",
   },
+  { key: "lexicon", href: "/lexicon", icon: "menu_book", label: "Lexicon" },
   { key: "scribe", href: "/scribe", icon: "edit_note", label: "Scribe Desk" },
   { key: "archived", href: "#", icon: "inventory_2", label: "Archived" },
 ];

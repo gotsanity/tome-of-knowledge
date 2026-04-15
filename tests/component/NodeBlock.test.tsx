@@ -23,4 +23,24 @@ describe("NodeBlock", () => {
     render(<NodeBlock label="Themes" value={["fate", "decay", "ambition"]} />);
     expect(screen.getAllByRole("listitem")).toHaveLength(3);
   });
+
+  it("renders children in place of value when provided", () => {
+    render(
+      <NodeBlock label="Calytrix">
+        <p>Custom body content</p>
+      </NodeBlock>,
+    );
+    expect(screen.getByText("Custom body content")).toBeTruthy();
+  });
+
+  it("renders a chip next to the label", () => {
+    render(
+      <NodeBlock
+        label="Blackwood"
+        value="A term"
+        chip={<span data-testid="domain-chip">World</span>}
+      />,
+    );
+    expect(screen.getByTestId("domain-chip")).toBeTruthy();
+  });
 });

@@ -1,24 +1,34 @@
+import type { ReactNode } from "react";
+
 /**
  * A Translator's-Note-style quote block. Renders a labeled, italic body
  * with an optional GM chip. Pure presentation primitive — callers decide
  * when and where to show it, and visibility gating happens upstream.
  *
- * Not currently wired into /node/[slug] because CWS v3.0 moved all
- * frontmatter that used to drive blocks into body sections. Kept for
- * future designs that want a labeled quote treatment for prose content.
+ * Provide `value` for the default italic prose rendering, or `children`
+ * for richer body content (children takes precedence).
  */
 export function NodeBlock({
   label,
   value,
+  chip,
   gmOnly,
+  className = "",
+  children,
 }: {
-  label: string;
-  value: string | readonly string[];
+  label: ReactNode;
+  value?: string | readonly string[];
+  chip?: ReactNode;
   gmOnly?: boolean;
+  className?: string;
+  children?: ReactNode;
 }) {
-  const items = Array.isArray(value) ? value : [value];
+  const items =
+    value === undefined ? [] : Array.isArray(value) ? value : [value];
   return (
-    <div className="bg-primary/5 p-6 border-l-2 border-primary/30 italic text-on-surface-variant text-sm leading-relaxed">
+    <div
+      className={`bg-primary/5 p-6 border-l-2 border-primary/30 italic text-on-surface-variant text-sm leading-relaxed ${className}`.trim()}
+    >
       <div className="flex items-center gap-2 not-italic mb-2">
         <span className="font-bold text-primary text-xs uppercase tracking-widest">
           {label}
@@ -31,8 +41,11 @@ export function NodeBlock({
             GM<span className="sr-only"> only</span>
           </span>
         )}
+        {chip && <span className="ml-auto">{chip}</span>}
       </div>
-      {items.length === 1 ? (
+      {children !== undefined ? (
+        children
+      ) : items.length === 1 ? (
         <p>{items[0]}</p>
       ) : (
         <ul className="list-disc pl-5 space-y-1 not-italic">
