@@ -14,13 +14,13 @@ test("Explore Records hero button routes to the Table of Contents", async ({
   await expect(page).toHaveURL(/\/contents$/);
 });
 
-test("Scroll to Descend anchor brings the Lexicon section into view", async ({
+test("Scroll to Descend anchor brings the Library section into view", async ({
   page,
 }) => {
   await page.goto("/");
-  const lexicon = page.locator("section#lexicon");
-  await expect(lexicon).not.toBeInViewport();
-  await page.getByRole("link", { name: /scroll to the lexicon section/i }).click();
-  await expect(page).toHaveURL(/#lexicon$/);
-  await expect(lexicon).toBeInViewport();
+  const library = page.locator("section#library");
+  await expect(library).not.toBeInViewport();
+  await page.getByRole("link", { name: /scroll to the library section/i }).click();
+  await expect(page).toHaveURL(/#library$/);
+  await expect(library).toBeInViewport();
 });

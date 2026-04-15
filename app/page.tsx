@@ -2,9 +2,11 @@ import Link from "next/link";
 import {
   AppShell,
   Button,
+  CategoryIndex,
   LandingFooterActions,
-  SectionHeading,
+  ShowcaseBento,
 } from "./components";
+import type { CategoryIndexItem } from "./components";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth-helpers";
 import { listCategoryCounts, getSiteStats } from "@/lib/vault/loaders";
@@ -23,6 +25,95 @@ export default async function Home() {
     .sort((a, b) =>
       CATEGORY_META[a.type].letter.localeCompare(CATEGORY_META[b.type].letter),
     );
+  const categoryItems: CategoryIndexItem[] = categories.map(({ type }) => {
+    const meta = CATEGORY_META[type];
+    return {
+      href: `/contents#${type}`,
+      letter: meta.letter,
+      label: meta.label,
+      blurb: meta.blurb,
+    };
+  });
+
+  const featuredTile = (
+    <article className="bg-stone-900/40 p-1 border border-stone-800 group hover:border-primary/30 transition-all">
+      <div className="relative overflow-hidden min-h-[400px] h-full">
+        <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-900 to-black group-hover:scale-105 transition-transform duration-700 opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 to-transparent" />
+        <div className="absolute bottom-8 left-8 right-8">
+          <span className="text-xs font-bold uppercase tracking-widest text-primary mb-2 block">
+            Topical Spotlight
+          </span>
+          <h3 className="text-4xl font-bold text-on-surface mb-4">
+            The Fall of Ironcrest
+          </h3>
+          <p className="text-stone-400 line-clamp-2 max-w-lg mb-6">
+            A detailed account of the cataclysm that ended the Dwarven Hegemony
+            in the year 442 of the Second Age.
+          </p>
+          <Link
+            href="/entry"
+            className="inline-flex items-center gap-2 text-primary uppercase text-xs font-bold tracking-widest hover:underline decoration-1 underline-offset-4"
+          >
+            Read Full Manuscript{" "}
+            <span className="material-symbols-outlined text-sm">
+              arrow_forward
+            </span>
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+
+  const spindleTile = (
+    <article className="bg-stone-900/40 border border-stone-800 p-8 hover:border-primary/30 transition-all flex flex-col justify-center">
+      <span className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-2">
+        Category: Artifacts
+      </span>
+      <h4 className="text-2xl font-bold mb-3 text-on-surface italic">
+        The Weaver&apos;s Spindle
+      </h4>
+      <p className="text-stone-500 text-sm leading-relaxed mb-4">
+        An obsidian relic whispered to hold the threads of fate itself. Found
+        in the shifting sands of Pelia.
+      </p>
+      <div className="flex justify-between items-center mt-auto pt-4 border-t border-stone-800/50">
+        <span className="text-[10px] text-stone-600 italic">
+          Last edited 3 days ago
+        </span>
+        <span className="material-symbols-outlined text-stone-600">
+          bookmark
+        </span>
+      </div>
+    </article>
+  );
+
+  const elixirsTile = (
+    <article className="bg-stone-900/40 border border-stone-800 p-8 hover:border-primary/30 transition-all flex flex-col justify-center">
+      <span className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-2">
+        Category: Alchemy
+      </span>
+      <h4 className="text-2xl font-bold mb-3 text-on-surface italic">
+        Void-Tinted Elixirs
+      </h4>
+      <p className="text-stone-500 text-sm leading-relaxed mb-4">
+        A compilation of dangerous drafts extracted from the journals of the
+        Renegade Alchemist, Malakor.
+      </p>
+      <div className="flex justify-between items-center mt-auto pt-4 border-t border-stone-800/50">
+        <span className="text-[10px] text-stone-600 italic">
+          Restricted Access
+        </span>
+        <span
+          className="material-symbols-outlined text-primary"
+          style={{ fontVariationSettings: "'FILL' 1" }}
+        >
+          lock
+        </span>
+      </div>
+    </article>
+  );
+
   const stats = [
     {
       icon: "history_edu",
@@ -76,8 +167,8 @@ export default async function Home() {
           </div>
         </div>
         <a
-          href="#lexicon"
-          aria-label="Scroll to the Lexicon section"
+          href="#library"
+          aria-label="Scroll to the Library section"
           className="relative z-10 pb-8 flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60"
         >
           <span className="text-[10px] uppercase tracking-widest text-primary">
@@ -89,130 +180,17 @@ export default async function Home() {
         </a>
       </section>
 
-      {/* Lexicon Section — Bento Grid */}
+      {/* Library Section — Bento Grid */}
       <section
-        id="lexicon"
+        id="library"
         className="scroll-mt-24 max-w-[1400px] mx-auto px-12 py-24"
       >
-        <SectionHeading
-          title="The Lexicon"
-          actions={
-            <>
-              <button className="p-2 border border-stone-800 text-stone-500 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined">grid_view</span>
-              </button>
-              <button className="p-2 border border-stone-800 text-stone-500 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined">list</span>
-              </button>
-            </>
-          }
+        <ShowcaseBento
+          title="The Library"
+          featured={featuredTile}
+          secondaries={[spindleTile, elixirsTile]}
         />
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* Featured Entry */}
-          <div className="md:col-span-7 bg-stone-900/40 p-1 border border-stone-800 group hover:border-primary/30 transition-all">
-            <div className="relative overflow-hidden h-[400px]">
-              <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-900 to-black group-hover:scale-105 transition-transform duration-700 opacity-60" />
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 to-transparent" />
-              <div className="absolute bottom-8 left-8 right-8">
-                <span className="text-xs font-bold uppercase tracking-widest text-primary mb-2 block">
-                  Topical Spotlight
-                </span>
-                <h3 className="text-4xl font-bold text-on-surface mb-4">
-                  The Fall of Ironcrest
-                </h3>
-                <p className="text-stone-400 line-clamp-2 max-w-lg mb-6">
-                  A detailed account of the cataclysm that ended the Dwarven
-                  Hegemony in the year 442 of the Second Age.
-                </p>
-                <Link
-                  href="/entry"
-                  className="inline-flex items-center gap-2 text-primary uppercase text-xs font-bold tracking-widest hover:underline decoration-1 underline-offset-4"
-                >
-                  Read Full Manuscript{" "}
-                  <span className="material-symbols-outlined text-sm">
-                    arrow_forward
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </div>
-          {/* Secondary Items */}
-          <div className="md:col-span-5 grid grid-rows-2 gap-8">
-            <div className="bg-stone-900/40 border border-stone-800 p-8 hover:border-primary/30 transition-all flex flex-col justify-center">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-2">
-                Category: Artifacts
-              </span>
-              <h4 className="text-2xl font-bold mb-3 text-on-surface italic">
-                The Weaver&apos;s Spindle
-              </h4>
-              <p className="text-stone-500 text-sm leading-relaxed mb-4">
-                An obsidian relic whispered to hold the threads of fate
-                itself. Found in the shifting sands of Pelia.
-              </p>
-              <div className="flex justify-between items-center mt-auto pt-4 border-t border-stone-800/50">
-                <span className="text-[10px] text-stone-600 italic">
-                  Last edited 3 days ago
-                </span>
-                <span className="material-symbols-outlined text-stone-600">
-                  bookmark
-                </span>
-              </div>
-            </div>
-            <div className="bg-stone-900/40 border border-stone-800 p-8 hover:border-primary/30 transition-all flex flex-col justify-center">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-2">
-                Category: Alchemy
-              </span>
-              <h4 className="text-2xl font-bold mb-3 text-on-surface italic">
-                Void-Tinted Elixirs
-              </h4>
-              <p className="text-stone-500 text-sm leading-relaxed mb-4">
-                A compilation of dangerous drafts extracted from the journals
-                of the Renegade Alchemist, Malakor.
-              </p>
-              <div className="flex justify-between items-center mt-auto pt-4 border-t border-stone-800/50">
-                <span className="text-[10px] text-stone-600 italic">
-                  Restricted Access
-                </span>
-                <span
-                  className="material-symbols-outlined text-primary"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  lock
-                </span>
-              </div>
-            </div>
-          </div>
-          {/* Category Index — deep-links into /contents */}
-          <nav
-            aria-label="Category index"
-            className="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8"
-          >
-            {categories.map(({ type }) => {
-              const meta = CATEGORY_META[type];
-              return (
-                <Link
-                  key={type}
-                  href={`/contents#${type}`}
-                  aria-label={`Browse ${meta.label}`}
-                  className="p-6 bg-surface-container-low hover:bg-surface-container-high focus-visible:bg-surface-container-high focus-ring transition-colors group rounded-sm"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="text-primary text-3xl font-bold mb-2 block group-hover:scale-110 transition-transform origin-left"
-                  >
-                    {meta.letter}
-                  </span>
-                  <h5 className="text-sm font-bold uppercase tracking-widest text-on-surface">
-                    {meta.label}
-                  </h5>
-                  <p className="text-xs text-on-surface-variant mt-2">
-                    {meta.blurb}
-                  </p>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+        <CategoryIndex items={categoryItems} />
       </section>
 
       {/* Statistics Footer Section */}

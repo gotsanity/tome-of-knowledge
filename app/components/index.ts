@@ -7,3 +7,5 @@ export { SessionProvider } from "./SessionProvider";
 export { AccountMenu } from "./AccountMenu";
 export { LoginModal } from "./LoginModal";
 export { LandingFooterActions } from "./LandingFooterActions";
+export { ShowcaseBento } from "./ShowcaseBento";
+export { CategoryIndex, type CategoryIndexItem } from "./CategoryIndex";
