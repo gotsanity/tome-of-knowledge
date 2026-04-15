@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { AppShell } from "../components";
+import { AppShell, ScribeButton } from "../components";
 
 const TAGS = ["Chronology", "Forbidden Lore", "Obsidian Vellum"];
 
@@ -137,12 +136,15 @@ export default function EntryDetailPage() {
           <div className="lg:col-span-4">
             <aside className="sticky top-24 space-y-8">
               <div className="bg-stone-900/40 backdrop-blur-sm border border-primary/20 p-6 rounded-sm shadow-sm shadow-stone-950/50">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-primary mb-6 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">
-                    info
-                  </span>
-                  Marginalia
-                </h4>
+                <div className="flex items-center justify-between mb-6">
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-primary flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">
+                      info
+                    </span>
+                    Marginalia
+                  </h4>
+                  <ScribeButton href="/scribe" />
+                </div>
                 <div className="space-y-6">
                   {METADATA.map((item) => (
                     <div key={item.label}>
@@ -215,20 +217,6 @@ export default function EntryDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Contextual FAB — edit this entry */}
-      <Link
-        href="/scribe"
-        className="fixed bottom-8 right-8 z-50 bg-primary hover:brightness-110 text-on-primary w-14 h-14 rounded-sm flex items-center justify-center shadow-xl shadow-primary/20 transition-all active:scale-95 group"
-        aria-label="Edit this entry"
-      >
-        <span
-          className="material-symbols-outlined transition-transform group-hover:rotate-12"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-        >
-          ink_pen
-        </span>
-      </Link>
     </AppShell>
   );
 }

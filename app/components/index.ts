@@ -10,3 +10,4 @@ export { LandingFooterActions } from "./LandingFooterActions";
 export { ShowcaseBento } from "./ShowcaseBento";
 export { CategoryIndex, type CategoryIndexItem } from "./CategoryIndex";
 export { NodeBlock } from "./NodeBlock";
+export { ScribeButton } from "./ScribeButton";

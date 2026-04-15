@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { AppShell } from "@/app/components";
+import { AppShell, ScribeButton } from "@/app/components";
 import { NodeHeader } from "@/app/components/NodeHeader";
 import { NodeBody } from "@/app/components/NodeBody";
 import { Marginalia } from "@/app/components/Marginalia";
@@ -126,6 +126,9 @@ export default async function NodePage({
                 node={node}
                 viewerIsGm={viewerIsGm}
                 nodeSlugs={wikilinks.nodeSlugs}
+                action={
+                  viewerIsGm ? <ScribeButton href="/scribe" /> : undefined
+                }
               />
               <LinkedRecords entries={linkedRecords} />
             </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { LoadedNode } from "@/lib/vault/loaders";
 import {
   partitionRulesForViewer,
@@ -19,10 +20,12 @@ export function Marginalia({
   node,
   viewerIsGm,
   nodeSlugs,
+  action,
 }: {
   node: LoadedNode;
   viewerIsGm: boolean;
   nodeSlugs?: Set<string>;
+  action?: ReactNode;
 }) {
   const { marginaliaRows, marginaliaBadges } = partitionRulesForViewer(
     node.type,
@@ -44,15 +47,18 @@ export function Marginalia({
       className="bg-surface-container-high/40 backdrop-blur-sm border border-outline-variant/30 p-6 rounded shadow-sm shadow-background/60"
       aria-labelledby="marginalia-heading"
     >
-      <h4
-        id="marginalia-heading"
-        className="text-[11px] font-black uppercase tracking-[0.25em] text-primary mb-6 flex items-center gap-2"
-      >
-        <span className="material-symbols-outlined text-sm" aria-hidden>
-          info
-        </span>
-        Marginalia
-      </h4>
+      <div className="flex items-center justify-between mb-6">
+        <h4
+          id="marginalia-heading"
+          className="text-[11px] font-black uppercase tracking-[0.25em] text-primary flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-sm" aria-hidden>
+            info
+          </span>
+          Marginalia
+        </h4>
+        {action}
+      </div>
       <div className="space-y-6">{rows}</div>
       {badges.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-outline-variant/30">

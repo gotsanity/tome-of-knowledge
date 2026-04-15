@@ -178,6 +178,22 @@ describe("Marginalia", () => {
     ).toBeNull();
   });
 
+  it("renders an action slot in the header row next to the heading", () => {
+    render(
+      <Marginalia
+        node={makeNode({ type: "npc", frontmatter: { species: "human" } })}
+        viewerIsGm={false}
+        action={<a href="/scribe" aria-label="Edit this entry">edit</a>}
+      />,
+    );
+    const heading = screen.getByRole("heading", { name: /marginalia/i });
+    const headerRow = heading.parentElement;
+    expect(headerRow).not.toBeNull();
+    expect(
+      headerRow!.querySelector("a[aria-label='Edit this entry']"),
+    ).not.toBeNull();
+  });
+
   it("renders type-specific status as a visible row for plotline, overriding the GM-only universal badge", () => {
     render(
       <Marginalia
