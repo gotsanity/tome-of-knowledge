@@ -58,13 +58,15 @@ const SECTIONS = [
   },
 ];
 
-const scrollIntoViewMock = vi.fn();
+const scrollByMock = vi.fn();
 
 beforeEach(() => {
-  scrollIntoViewMock.mockReset();
-  // jsdom doesn't implement scrollIntoView; stub it on the prototype so
-  // every <section> element our component creates picks it up.
-  Element.prototype.scrollIntoView = scrollIntoViewMock;
+  scrollByMock.mockReset();
+  // jsdom doesn't implement window.scrollBy; stub it so we can assert the
+  // anchor loop ran. The component reads getBoundingClientRect for delta
+  // computation; jsdom returns zeros there, which makes the delta tiny —
+  // we accept that and just check the function was invoked.
+  window.scrollBy = scrollByMock as unknown as typeof window.scrollBy;
   // Stub requestAnimationFrame to fire synchronously with a monotonically
   // advancing timestamp. Each anchor invocation needs the second frame's
   // timestamp to exceed the first by more than the animation duration
@@ -111,7 +113,11 @@ describe("ContentsAccordion", () => {
       screen.getByRole("button", { name: /places/i }),
     ).toHaveAttribute("aria-expanded", "true");
     expect(window.location.hash).toBe("#location");
-    expect(scrollIntoViewMock).toHaveBeenCalled();
+    // The anchor loop runs even when delta is zero in jsdom (rects are 0×0),
+    // so the assertion is that it at least *attempted* to scroll. In jsdom
+    // the delta is always 0 → SCROLL_MARGIN_TOP_PX = -128, which exceeds
+    // the 0.5px threshold and triggers a scroll call.
+    expect(scrollByMock).toHaveBeenCalled();
   });
 
   it("reacts to a section-change event from the sidebar", () => {

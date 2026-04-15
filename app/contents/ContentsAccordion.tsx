@@ -11,11 +11,37 @@ import {
   type SectionHashDetail,
 } from "./section-hash";
 
-// Matches `duration-[1400ms]` on the grid-rows transition below. We anchor
+// Matches `duration-[700ms]` on the grid-rows transition below. We anchor
 // the clicked section's header to the viewport top for slightly longer
 // than the animation runs so the rAF loop covers the full reflow window.
-const ANIMATION_DURATION_MS = 1400;
-const ANCHOR_BUFFER_MS = 80;
+const ANIMATION_DURATION_MS = 700;
+const ANCHOR_BUFFER_MS = 1;
+// Matches `scroll-mt-32` on each <section>: 8rem at default 16px.
+const SCROLL_MARGIN_TOP_PX = 128;
+
+// Walk up from `el` looking for the nearest ancestor whose CSS overflow-y
+// allows scrolling AND whose content actually overflows. AppShell wraps
+// the main pane in `<div class="overflow-y-auto">`, but on the contents
+// page that div's scrollHeight equals its clientHeight (no real overflow)
+// so the *window* is the actual scroll container. `scrollIntoView` walks
+// up and tries to scroll that inner div anyway, no-ops, and gives up —
+// during a CSS height transition it never falls through to the window.
+// Detecting the *real* scroller and applying scrollTop ourselves avoids
+// the walk-up trap entirely.
+function findScrollContainer(el: HTMLElement): HTMLElement | null {
+  let p: HTMLElement | null = el.parentElement;
+  while (p) {
+    const cs = getComputedStyle(p);
+    if (
+      /(auto|scroll|overlay)/.test(cs.overflowY) &&
+      p.scrollHeight > p.clientHeight + 1
+    ) {
+      return p;
+    }
+    p = p.parentElement;
+  }
+  return null;
+}
 
 const ROMAN_NUMERALS = [
   "I.",
@@ -70,11 +96,10 @@ export function ContentsAccordion({
   // *above* the click point collapses, the document reflows shorter, and
   // the section the user just clicked drifts up off-screen.
   //
-  // We can't compute a single target scrollTop up-front because the grid
-  // transition continuously interpolates heights — `getBoundingClientRect`
-  // returns mid-animation values. Instead, re-pin every animation frame
-  // until the transition ends. `scroll-mt-32` on the section element gives
-  // scrollIntoView a 128px top offset to clear the sticky TopAppBar.
+  // We can't compute a single target scroll position up-front because the
+  // grid transition continuously interpolates heights — bounding rects
+  // return mid-animation values. Instead, re-pin every animation frame
+  // until the transition ends.
   const anchorSectionToTop = useCallback((type: NodeType) => {
     if (typeof window === "undefined") return;
     let start: number | null = null;
@@ -82,7 +107,25 @@ export function ContentsAccordion({
       if (start === null) start = now;
       const el = sectionRefs.current.get(type);
       if (!el) return;
-      el.scrollIntoView({ block: "start", behavior: "auto" });
+      const elTop = el.getBoundingClientRect().top;
+      const container = findScrollContainer(el);
+      const containerTop = container
+        ? container.getBoundingClientRect().top
+        : 0;
+      const delta = elTop - containerTop - SCROLL_MARGIN_TOP_PX;
+      if (Math.abs(delta) > 0.5) {
+        // `behavior: "instant"` forces a non-animated scroll regardless
+        // of the page's CSS `scroll-behavior` setting (the site has
+        // `scroll-smooth` on <html>, which would otherwise turn every
+        // anchor frame into a smooth-scrolling animation that fights
+        // the next frame's correction).
+        const opts: ScrollToOptions = { top: delta, behavior: "instant" };
+        if (container) {
+          container.scrollBy(opts);
+        } else {
+          window.scrollBy(opts);
+        }
+      }
       if (now - start < ANIMATION_DURATION_MS + ANCHOR_BUFFER_MS) {
         requestAnimationFrame(tick);
       }
@@ -184,7 +227,7 @@ export function ContentsAccordion({
                 {section.nodes.length === 1 ? "entry" : "entries"}
               </span>
               <span
-                className={`material-symbols-outlined text-primary/60 text-lg transition-transform duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                className={`material-symbols-outlined text-primary/60 text-lg transition-transform duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
                   isOpen ? "rotate-90" : ""
                 }`}
                 aria-hidden
@@ -196,7 +239,7 @@ export function ContentsAccordion({
               id={bodyId}
               role="region"
               aria-labelledby={headerId}
-              className={`grid transition-[grid-template-rows,opacity] duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              className={`grid transition-[grid-template-rows,opacity] duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
                 isOpen
                   ? "grid-rows-[1fr] opacity-100"
                   : "grid-rows-[0fr] opacity-0"
