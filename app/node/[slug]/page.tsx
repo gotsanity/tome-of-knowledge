@@ -127,7 +127,9 @@ export default async function NodePage({
                 viewerIsGm={viewerIsGm}
                 nodeSlugs={wikilinks.nodeSlugs}
                 action={
-                  viewerIsGm ? <ScribeButton href="/scribe" /> : undefined
+                  viewerIsGm ? (
+                    <ScribeButton kind="node" slug={node.slug} />
+                  ) : undefined
                 }
               />
               <LinkedRecords entries={linkedRecords} />

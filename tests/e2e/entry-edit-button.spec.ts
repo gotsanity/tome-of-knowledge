@@ -28,4 +28,14 @@ test.describe("entry page edit button", () => {
       .count();
     expect(fabs).toBe(0);
   });
+
+  test("edit button links to the subject-aware scribe route", async ({
+    page,
+  }) => {
+    await page.goto("/entry");
+    const editLink = page.locator("a[aria-label='Edit this entry']");
+    const href = await editLink.getAttribute("href");
+    // Shape: /scribe/<kind>/<slug>. The demo entry points to a node subject.
+    expect(href).toMatch(/^\/scribe\/(node|page)\/[^/]+$/);
+  });
 });

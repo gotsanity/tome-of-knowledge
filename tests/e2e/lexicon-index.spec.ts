@@ -20,7 +20,9 @@ test.describe("lexicon index page", () => {
   });
 
   test("is reachable from any page via the sidebar", async ({ page }) => {
-    for (const route of ["/", "/contents", "/scribe"]) {
+    // /scribe is now GM-gated (404 for anon), so it's not in this list. The
+    // lexicon link must still be reachable from every public route.
+    for (const route of ["/", "/contents"]) {
       await page.goto(route);
       const sidebarLink = page.locator("aside a[href='/lexicon']").first();
       await expect(sidebarLink).toBeVisible();

@@ -143,7 +143,7 @@ export default function EntryDetailPage() {
                     </span>
                     Marginalia
                   </h4>
-                  <ScribeButton href="/scribe" />
+                  <ScribeButton kind="node" slug="the-obsidian-vellum" />
                 </div>
                 <div className="space-y-6">
                   {METADATA.map((item) => (

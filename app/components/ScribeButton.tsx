@@ -1,17 +1,21 @@
 import Link from "next/link";
+import type { ScribeSubjectKind } from "@/lib/vault/scribe";
 
 /**
- * Small icon-link that takes the reader from a node view to the Scribe
- * desk. Designed to nest inside a card header row alongside a heading;
- * negative margins keep it flush with the card's padding.
+ * Icon-link that takes the reader from a subject view (node or page) to the
+ * Scribe desk for that subject. The desk URL is derived from kind + slug so
+ * callers don't have to know the route shape.
  */
 export function ScribeButton({
-  href,
+  kind,
+  slug,
   label = "Edit this entry",
 }: {
-  href: string;
+  kind: ScribeSubjectKind;
+  slug: string;
   label?: string;
 }) {
+  const href = `/scribe/${kind}/${slug}`;
   return (
     <Link
       href={href}

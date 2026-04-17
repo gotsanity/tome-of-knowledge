@@ -41,6 +41,9 @@ export type RelationshipSource = (typeof RELATIONSHIP_SOURCES)[number];
 export const LEXICON_DOMAINS = ["CWS", "World", "RPG"] as const;
 export type LexiconDomain = (typeof LEXICON_DOMAINS)[number];
 
+export const PAGE_ORIGINS = ["vault", "app"] as const;
+export type PageOrigin = (typeof PAGE_ORIGINS)[number];
+
 export const users = sqliteTable("users", {
   id: text("id")
     .primaryKey()
@@ -243,6 +246,32 @@ export const nodeThemes = sqliteTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.nodeId, table.themeId] }),
+  }),
+);
+
+export const pages = sqliteTable(
+  "pages",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    bodyMd: text("body_md").notNull().default(""),
+    frontmatter: text("frontmatter").notNull().default("{}"),
+    origin: text("origin", { enum: PAGE_ORIGINS }).notNull().default("app"),
+    createdBy: text("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (table) => ({
+    slugIdx: uniqueIndex("pages_slug_idx").on(table.slug),
   }),
 );
 
